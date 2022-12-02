@@ -6,6 +6,12 @@ class Day02Test {
     @Test
     fun part1() {
         assertEquals(15, Day02.compute(readInput("Day02_test")))
-        println(Day02.compute(readInput("Day02")))
+        println("part 1: " + Day02.compute(readInput("Day02")))
+    }
+
+    @Test
+    fun part2() {
+        assertEquals(12, Day02.compute2(readInput("Day02_test")))
+        println("part2: " + Day02.compute2(readInput("Day02")))
     }
 }
