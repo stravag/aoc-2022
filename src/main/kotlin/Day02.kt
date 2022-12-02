@@ -5,14 +5,13 @@ object Day02 {
     fun compute(input: List<String>): Int {
         return input
             .map { it.parse() }
-            .sumOf { (a, b) -> b.score + play(a, b) }
+            .sumOf { (a, b) -> b.score + play(a, b).score }
     }
 
     fun compute2(input: List<String>): Int {
         return input
             .map { it.parse2() }
-            .map { (a, o) -> a to determineAnswer(a, o) }
-            .sumOf { (a, b) -> b.score + play(a, b)}
+            .sumOf { (a, o) -> determineAnswer(a, o).score + o.score }
     }
 
     private enum class Shape(val score: Int) {
@@ -32,8 +31,8 @@ object Day02 {
         }
     }
 
-    private enum class Outcome {
-        LOSE, DRAW, WIN;
+    private enum class Outcome(val score: Int) {
+        LOSE(0), DRAW(3), WIN(6);
 
         companion object {
             fun of(s: String): Outcome {
@@ -60,11 +59,11 @@ object Day02 {
         return Shape.of(shapeStr) to Outcome.of(outcomeStr)
     }
 
-    private fun play(a: Shape, b: Shape): Int {
+    private fun play(a: Shape, b: Shape): Outcome {
         return when {
-            (a == ROCK && b == SCISSOR) || (a == PAPER && b == ROCK) || (a == SCISSOR && b == PAPER) -> 0 // lose
-            a == b -> 3 // draw
-            else -> 6 // win
+            (a == ROCK && b == SCISSOR) || (a == PAPER && b == ROCK) || (a == SCISSOR && b == PAPER) -> LOSE
+            a == b -> DRAW
+            else -> WIN
         }
     }
 
@@ -76,6 +75,7 @@ object Day02 {
                 PAPER -> ROCK
                 SCISSOR -> PAPER
             }
+
             WIN -> when (a) {
                 ROCK -> PAPER
                 PAPER -> SCISSOR
