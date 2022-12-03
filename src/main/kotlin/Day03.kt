@@ -1,8 +1,25 @@
 object Day03 {
-    fun compute(input: List<String>): Int {
+    fun compute1(input: List<String>): Int {
         return input
             .map { it.findDuplicate() }
             .sumOf { it.priority() }
+    }
+
+    fun compute2(input: List<String>): Int {
+        return input
+            .windowed(size = 3, step = 3) {
+                it.findBadge()
+            }
+            .sumOf { it.priority() }
+    }
+
+    private fun List<String>.findBadge(): Char {
+        val (e1, e2, e3) = this
+            .map { it.toCharArray() }
+            .map { it.toTypedArray() }
+            .map { it.toSet() }
+
+        return e1.intersect(e2).intersect(e3).single()
     }
 
     private fun String.findDuplicate(): Char {
