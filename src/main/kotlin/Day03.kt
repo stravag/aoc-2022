@@ -14,20 +14,16 @@ object Day03 {
     }
 
     private fun List<String>.findBadge(): Char {
-        val (e1, e2, e3) = this
-            .map { it.toCharArray() }
-            .map { it.toTypedArray() }
-            .map { it.toSet() }
-
+        val (e1, e2, e3) = this.map { it.toCharArray().toSet() }
         return e1.intersect(e2).intersect(e3).single()
     }
 
     private fun String.findDuplicate(): Char {
         val middleIdx = this.length / 2
-        val comp1 = this.toCharArray(startIndex = 0, endIndex = middleIdx)
-        val comp2 = this.toCharArray(startIndex = middleIdx)
+        val comp1 = this.toCharArray(startIndex = 0, endIndex = middleIdx).toSet()
+        val comp2 = this.toCharArray(startIndex = middleIdx).toSet()
 
-        return comp1.intersect(comp2.toTypedArray().toSet()).single()
+        return comp1.intersect(comp2).single()
     }
 
     private fun Char.priority(): Int {
