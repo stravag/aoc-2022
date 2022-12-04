@@ -14,10 +14,8 @@ object Day04 {
             .map { it.split(",") }
             .count { (a, b) ->
                 val (a1, a2) = a.split("-").map { it.toInt() }
-                val r1 = IntRange(a1, a2)
                 val (b1, b2) = b.split("-").map { it.toInt() }
-                val r2 = IntRange(b1, b2)
-                r1.contains(b1) || r1.contains(b2) || r2.contains(a1) || r2.contains(a2)
+                a1 in b1..b2 || a2 in b1..b2 || b1 in a1..a2 || b2 in a1..a2
             }
     }
 }
