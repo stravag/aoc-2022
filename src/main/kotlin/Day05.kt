@@ -1,71 +1,34 @@
 object Day05 {
     fun compute1(input: List<String>): String {
-        val stackData = input
-            .takeWhile { it.isNotBlank() }
+        val (stacks, moves) = input.parse()
 
-        val numberOfStacks = stackData
-            .last()
-            .split(" ")
-            .last { it.isNotBlank() }
-            .toInt()
+        moves.forEach {
+            applyMove(it, stacks)
+        }
 
-        val stacks = List(numberOfStacks) { ArrayDeque<Char>() }
-        stackData
-            .dropLast(1)
-            .reversed()
-            .forEach {
-                it.putOnStacks(stacks)
-            }
-
-        input
-            .drop(stackData.size + 1)
-            .forEach {
-                applyMove(it, stacks)
-            }
-
-        return stacks
-            .map { it.last() }
-            .joinToString("")
+        return stacks.readAnswer()
     }
 
     fun compute2(input: List<String>): String {
-        val stackData = input
-            .takeWhile { it.isNotBlank() }
+        val (stacks, moves) = input.parse()
 
-        val numberOfStacks = stackData
-            .last()
-            .split(" ")
-            .last { it.isNotBlank() }
-            .toInt()
+        moves.forEach {
+            applyMove2(it, stacks)
+        }
 
-        val stacks = List(numberOfStacks) { ArrayDeque<Char>() }
-        stackData
-            .dropLast(1)
-            .reversed()
-            .forEach {
-                it.putOnStacks(stacks)
-            }
-
-        input
-            .drop(stackData.size + 1)
-            .forEach {
-                applyMove2(it, stacks)
-            }
-
-        return stacks
-            .map { it.last() }
-            .joinToString("")
+        return stacks.readAnswer()
     }
 
-    private fun applyMove(move: String, stacks: List<ArrayDeque<Char>>) {
-        val (count, from, to) = move.split(" ").filter { it.isNumber() }.map { it.toInt() }
+    private fun applyMove(move: String, stacks: Stacks) {
+        val (count, from, to) = move.parse()
         repeat(count) {
             val toMove = stacks[from - 1].removeLast()
             stacks[to - 1].addLast(toMove)
         }
     }
-    private fun applyMove2(move: String, stacks: List<ArrayDeque<Char>>) {
-        val (count, from, to) = move.split(" ").filter { it.isNumber() }.map { it.toInt() }
+
+    private fun applyMove2(move: String, stacks: Stacks) {
+        val (count, from, to) = move.parse()
         stacks[from - 1]
             .takeLast(count)
             .forEach {
@@ -74,7 +37,31 @@ object Day05 {
             }
     }
 
-    private fun String.putOnStacks(stacks: List<MutableList<Char>>) {
+    private fun String.parse() = split(" ").filter { it.isNumber() }.map { it.toInt() }
+
+    private fun List<String>.parse(): Pair<Stacks, List<String>> {
+        val stackData = this.takeWhile { it.isNotBlank() }
+
+        val numberOfStacks = stackData
+            .last()
+            .split(" ")
+            .last { it.isNotBlank() }
+            .toInt()
+
+        val stacks = List(numberOfStacks) { ArrayDeque<Char>() }
+        stackData
+            .dropLast(1)
+            .reversed()
+            .forEach {
+                it.putOnStacks(stacks)
+            }
+
+        val moves = this.drop(stackData.size + 1)
+
+        return stacks to moves
+    }
+
+    private fun String.putOnStacks(stacks: Stacks) {
         val charArray = this.toCharArray()
         for (i in stacks.indices) {
             val idx = i + 3 * i + 1
@@ -89,4 +76,11 @@ object Day05 {
     } catch (e: Exception) {
         false
     }
+
+    private fun Stacks.readAnswer(): String {
+        return map { it.last() }
+            .joinToString("")
+    }
 }
+
+typealias Stacks = List<ArrayDeque<Char>>
