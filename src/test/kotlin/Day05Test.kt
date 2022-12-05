@@ -8,4 +8,10 @@ class Day05Test {
         assertEquals("CMZ", Day05.compute1(readInput("Day05_test")))
         println("part 1: " + Day05.compute1(readInput("Day05")))
     }
+
+    @Test
+    fun part2() {
+        assertEquals("MCD", Day05.compute2(readInput("Day05_test")))
+        println("part 2: " + Day05.compute2(readInput("Day05")))
+    }
 }
