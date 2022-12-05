@@ -12,7 +12,7 @@ void main() {
 
 int part1(String input) {
   return readInput(input)
-      .map((e) => splitInHalf(e))
+      .map((e) => e.splitInHalf())
       .map((e) => toCharSets(e))
       .map((e) => findDuplicate(e[0], e[1]))
       .map((e) => priority(e))
@@ -23,8 +23,10 @@ int part2(String input) {
   return 0;
 }
 
-List<String> splitInHalf(String s) {
-  return [s.substring(0, s.length ~/ 2), s.substring(s.length ~/ 2, s.length)];
+extension StringHandling on String {
+  List<String> splitInHalf() {
+    return [this.substring(0, this.length ~/ 2), this.substring(this.length ~/ 2, this.length)];
+  }
 }
 
 List<Set<int>> toCharSets(List<String> groups) {
