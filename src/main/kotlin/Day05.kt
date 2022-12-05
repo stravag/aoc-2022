@@ -37,7 +37,14 @@ object Day05 {
             }
     }
 
-    private fun String.parse() = split(" ").filter { it.isNumber() }.map { it.toInt() }
+    private fun String.parse(): Move {
+        val parts = split(" ")
+        return Move(
+            count = parts[1].toInt(),
+            from = parts[3].toInt(),
+            to = parts[5].toInt(),
+        )
+    }
 
     private fun List<String>.parse(): Pair<Stacks, List<String>> {
         val stackData = this.takeWhile { it.isNotBlank() }
@@ -70,17 +77,12 @@ object Day05 {
         }
     }
 
-    private fun String.isNumber() = try {
-        this.toInt()
-        true
-    } catch (e: Exception) {
-        false
-    }
-
     private fun Stacks.readAnswer(): String {
         return map { it.last() }
             .joinToString("")
     }
+
+    data class Move(val count: Int, val from: Int, val to: Int)
 }
 
 typealias Stacks = List<ArrayDeque<Char>>
