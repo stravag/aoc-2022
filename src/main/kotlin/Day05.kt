@@ -78,7 +78,7 @@ private fun List<String>.parse(): Pair<Stacks, List<String>> {
 private fun String.putOnStacks(stacks: Stacks) {
     val charArray = this.toCharArray()
     for (i in stacks.indices) {
-        val idx = i + 3 * i + 1
+        val idx = 4 * i + 1
         val char = charArray.elementAtOrNull(idx) ?: ' '
         if (char != ' ') stacks[i].add(char)
     }
