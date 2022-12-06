@@ -29,18 +29,18 @@ private fun compute2(input: List<String>): String {
 private fun applyMove(move: String, stacks: Stacks) {
     val (count, from, to) = move.parse()
     repeat(count) {
-        val toMove = stacks[from - 1].removeLast()
-        stacks[to - 1].addLast(toMove)
+        val toMove = stacks[from].removeLast()
+        stacks[to].addLast(toMove)
     }
 }
 
 private fun applyMove2(move: String, stacks: Stacks) {
     val (count, from, to) = move.parse()
-    stacks[from - 1]
+    stacks[from]
         .takeLast(count)
         .forEach {
-            stacks[from - 1].removeLast()
-            stacks[to - 1].addLast(it)
+            stacks[from].removeLast()
+            stacks[to].addLast(it)
         }
 }
 
@@ -48,8 +48,8 @@ private fun String.parse(): Move {
     val parts = split(" ")
     return Move(
         count = parts[1].toInt(),
-        from = parts[3].toInt(),
-        to = parts[5].toInt(),
+        from = parts[3].toInt() - 1,
+        to = parts[5].toInt() - 1,
     )
 }
 
