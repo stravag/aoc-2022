@@ -28,7 +28,7 @@ private fun compute2(input: List<String>): List<Int> {
 }
 
 private fun String.findSignalLoc(signalSize: Int): Int {
-    for (i in signalSize until length) {
+    for (i in signalSize .. length) {
         val chunk = subSequence(i - signalSize, i)
         if (chunk.toSet().size == signalSize) return i
     }
