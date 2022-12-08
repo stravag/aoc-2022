@@ -4,12 +4,20 @@ import Shape.*
 fun main() {
     execute(
         day = "Day02",
-        part1 = 15 to ::compute,
-        part2 = 12 to ::compute2,
+        part1 = Part(
+            expectedTestResult = 15,
+            expectedResult = 12586,
+            compute = ::compute1
+        ),
+        part2 = Part(
+            expectedTestResult = 12,
+            expectedResult = 13193,
+            compute = ::compute2
+        ),
     )
 }
 
-private fun compute(input: List<String>): Int {
+private fun compute1(input: List<String>): Int {
     return input
         .map { it.parse() }
         .sumOf { (a, b) -> b.score + play(a, b).score }

@@ -3,10 +3,16 @@ import ViewDirection.*
 fun main() {
     execute(
         day = "Day08",
-        part1 = 21 to ::compute1,
-        part1Result = 1736,
-        part2 = 8 to ::compute2,
-        part2Result = 268800
+        part1 = Part(
+            expectedTestResult = 21,
+            expectedResult = 1736,
+            compute = ::compute1
+        ),
+        part2 = Part(
+            expectedTestResult = 8,
+            expectedResult = 268800,
+            compute = ::compute2
+        )
     )
 }
 

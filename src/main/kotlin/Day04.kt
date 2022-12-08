@@ -1,8 +1,16 @@
 fun main() {
     execute(
         day = "Day04",
-        part1 = 2 to ::compute1,
-        part2 = 4 to ::compute2,
+        part1 = Part(
+            expectedTestResult = 2,
+            expectedResult = 487,
+            compute = ::compute1
+        ),
+        part2 = Part(
+            expectedTestResult = 4,
+            expectedResult = 849,
+            compute = ::compute2
+        ),
     )
 }
 

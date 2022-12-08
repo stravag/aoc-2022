@@ -1,8 +1,16 @@
 fun main() {
     execute(
         day = "Day05",
-        part1 = "CMZ" to ::compute1,
-        part2 = "MCD" to ::compute2,
+        part1 = Part(
+            expectedTestResult = "CMZ",
+            expectedResult = "VJSFHWGFT",
+            compute = ::compute1
+        ),
+        part2 = Part(
+            expectedTestResult = "MCD",
+            expectedResult = "LCTQFBVZV",
+            compute = ::compute2
+        )
     )
 }
 

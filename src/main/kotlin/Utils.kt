@@ -2,31 +2,49 @@ import java.io.File
 
 fun <R1, R2> execute(
     day: String,
-    part1: Pair<R1, (List<String>) -> R1>,
-    part1Test: List<String> = readInput("${day}_test.txt"),
-    part1Result: R1? = null,
-    part2: Pair<R2, (List<String>) -> R2>,
-    part2Test: List<String> = readInput("${day}_test.txt"),
-    part2Result: R2? = null,
+    part1: Part<R1>,
+    part1TestData: List<String> = readInput("${day}_test.txt"),
+    part2: Part<R2>,
+    part2TestData: List<String> = readInput("${day}_test.txt"),
 ) {
-    val (expected1, method1) = part1
-    val testAnswer1 = method1(part1Test)
-    val answer1 = method1(readInput("${day}.txt"))
-    check(expected1 == testAnswer1) { "expected $expected1 but got $testAnswer1" }
-    part1Result?.let { expectedResult1 ->
-        check(expectedResult1 == answer1) { "expected $expectedResult1 but got $answer1" }
-    }
-    println("part1: $answer1")
 
-    val (expected2, method2) = part2
-    val testAnswer2 = method2(part2Test)
-    val answer2 = method2(readInput("${day}.txt"))
-    check(expected2 == testAnswer2) { "expected $expected2 but got $testAnswer2" }
-    part2Result?.let { expectedResult2 ->
-        check(expectedResult2 == answer2) { "expected $expectedResult2 but got $answer2" }
-    }
-    println("part2: $answer2")
+    val puzzleData = readInput("${day}.txt")
+    val result1 = runPart(
+        part1TestData,
+        puzzleData,
+        part1.compute,
+        part1.expectedTestResult,
+        part1.expectedResult
+    )
+    println("part1: $result1")
+
+    val result2 = runPart(
+        part2TestData,
+        puzzleData,
+        part2.compute,
+        part2.expectedTestResult,
+        part2.expectedResult
+    )
+    println("part2: $result2")
 }
+
+private fun <R> runPart(
+    testData: List<String>,
+    puzzleData: List<String>,
+    compute: (List<String>) -> R,
+    expectedTestResult: R,
+    expectedResult: R
+): R {
+    compute(testData).also { check(it == expectedTestResult) { "expected $expectedTestResult but got $it" } }
+    return compute(puzzleData).also { check(it == expectedResult) { "expected $expectedResult but got $it" } }
+}
+
+
+data class Part<R>(
+    val expectedTestResult: R,
+    val expectedResult: R,
+    val compute: (List<String>) -> R,
+)
 
 private fun readInput(file: String) = File("src/main/resources/$file").readLines()
 

@@ -3,8 +3,16 @@ import kotlin.math.max
 fun main() {
     execute(
         day = "Day01",
-        part1 = 24000 to ::part1,
-        part2 = 45000 to ::part2,
+        part1 = Part(
+            expectedTestResult = 24000,
+            expectedResult = 70374,
+            compute = ::part1
+        ),
+        part2 = Part(
+            expectedTestResult = 45000,
+            expectedResult = 204610,
+            compute = ::part2
+        ),
     )
 }
 

@@ -1,21 +1,29 @@
 fun main() {
     execute(
         day = "Day06",
-        part1 = listOf(5, 6, 10, 11) to ::compute1,
-        part1Test = listOf(
+        part1 = Part(
+            expectedTestResult = listOf(5, 6, 10, 11),
+            expectedResult = listOf(1080),
+            compute = ::compute1
+        ),
+        part1TestData = listOf(
             "bvwbjplbgvbhsrlpgdmjqwftvncz",
             "nppdvjthqldpwncqszvftbrmjlhg",
             "nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg",
             "zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw",
         ),
-        part2 = listOf(19, 23, 23, 29, 26) to ::compute2,
-        part2Test = listOf(
+        part2 = Part(
+            expectedTestResult = listOf(19, 23, 23, 29, 26),
+            expectedResult = listOf(3645),
+            compute = ::compute2
+        ),
+        part2TestData = listOf(
             "mjqjpqmgbljsphdztnvjfqwrcgsmlb",
             "bvwbjplbgvbhsrlpgdmjqwftvncz",
             "nppdvjthqldpwncqszvftbrmjlhg",
             "nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg",
             "zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw",
-        ),
+        )
     )
 }
 
