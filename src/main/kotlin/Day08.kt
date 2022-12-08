@@ -6,95 +6,49 @@ fun main() {
         part1 = 21 to ::compute1,
         part1Result = 1736,
         part2 = 8 to ::compute2,
+        part2Result = 268800
     )
 }
 
 private fun compute1(input: List<String>): Int {
-    val trees: Forrest = input
-        .map { row ->
-            row.toCharArray()
-                .map { it.toString() }
-                .map { it.toInt() }
-        }
-
-    val visibleTrees = trees.flatMapIndexed { rowIdx, treeRow ->
-        treeRow.filterIndexed { colIdx, _ ->
-            trees.isTreeVisibleFromEdge(rowIdx, colIdx)
-        }
+    val forrest = input.convert()
+    return forrest.count { coordinates ->
+        forrest.isTreeVisibleFromEdge(coordinates)
     }
-
-    return visibleTrees.count()
 }
 
 private fun compute2(input: List<String>): Int {
-    val trees: Forrest = input
-        .map { row ->
-            row.toCharArray()
-                .map { it.toString() }
-                .map { it.toInt() }
-        }
-
-    val viewingScores = trees.flatMapIndexed { rowIdx, treeRow ->
-        List(treeRow.size) { colIdx ->
-            trees.treeViewingScore(rowIdx, colIdx)
-        }
+    val trees: Forrest = input.convert()
+    return  trees.max { coordinates ->
+        trees.treeViewingScore(coordinates)
     }
-
-    return viewingScores.max()
 }
 
-private fun Forrest.isTreeVisibleFromEdge(rowIdx: Int, colIdx: Int): Boolean {
-    val width = this[rowIdx].size
-    val tree = this[rowIdx][colIdx]
-
-    val leftTrees = this[rowIdx].sublistOrNull(0, colIdx) ?: listOf(-1)
-    val rightTrees = this[rowIdx].sublistOrNull(colIdx + 1, width) ?: listOf(-1)
-    val topTrees = this
-        .filterIndexed { y, _ -> y < rowIdx }
-        .map { it[colIdx] }
-        .ifEmpty { listOf(-1) }
-    val bottomTrees = this
-        .filterIndexed { y, _ -> y > rowIdx }
-        .map { it[colIdx] }
-        .ifEmpty { listOf(-1) }
-
-    return leftTrees.all { tree > it } || rightTrees.all { tree > it } || topTrees.all { tree > it } || bottomTrees.all { tree > it }
+private fun List<String>.convert(): Forrest {
+    val trees = this.map { row ->
+        row.toCharArray()
+            .map { it.toString() }
+            .map { Tree(it.toInt()) }
+    }
+    return Forrest(trees)
 }
 
-private fun Forrest.treeViewingScore(rowIdx: Int, colIdx: Int): Int {
-    val width = this[rowIdx].size
-    val tree = this[rowIdx][colIdx]
-
-    val visibleLeft = this[rowIdx].sublistOrEmpty(0, colIdx).visibleTrees(tree, LEFT)
-    val visibleRight = this[rowIdx].sublistOrEmpty(colIdx + 1, width).visibleTrees(tree, RIGHT)
-    val visibleUp = this
-        .filterIndexed { y, _ -> y < rowIdx }
-        .map { it[colIdx] }
-        .visibleTrees(tree, UP)
-    val visibleDown = this
-        .filterIndexed { y, _ -> y > rowIdx }
-        .map { it[colIdx] }
-        .visibleTrees(tree, DOWN)
-
-    val score = visibleLeft.size * visibleRight.size * visibleUp.size * visibleDown.size
-    return score
-}
-
-private fun List<Int>.visibleTrees(treeHeight: Int, direction: ViewDirection): List<Int> {
+private fun List<Tree>.visibleTrees(tree: Tree, direction: ViewDirection): List<Tree> {
     val indices = when (direction) {
         LEFT, UP -> this.indices.reversed()
         RIGHT, DOWN -> this.indices
     }
 
-    val visibleTrees = mutableListOf<Int>()
+    val visibleTrees = mutableListOf<Tree>()
     for (i in indices) {
         val nextTree = this[i]
         when {
-            nextTree >= treeHeight -> {
+            nextTree >= tree -> {
                 visibleTrees.add(nextTree)
                 break
             }
-            nextTree < treeHeight -> visibleTrees.add(nextTree)
+
+            nextTree < tree -> visibleTrees.add(nextTree)
         }
     }
     return visibleTrees
@@ -105,4 +59,65 @@ private enum class ViewDirection {
     RIGHT, DOWN
 }
 
-typealias Forrest = List<List<Int>>
+private data class Coordinates(val rowIdx: Int, val colIdx: Int)
+
+private data class Forrest(
+    val trees: List<List<Tree>>
+) {
+    private fun <R> map(transform: (Coordinates) -> R): List<R> {
+        return trees.flatMapIndexed { rowIdx, treeRow ->
+            List(treeRow.size) { colIdx ->
+                transform(Coordinates(rowIdx, colIdx))
+            }
+        }
+    }
+
+    fun <R> count(transform: (Coordinates) -> R): Int {
+        return map(transform).count()
+    }
+
+    fun max(transform: (Coordinates) -> Int): Int {
+        return map(transform).max()
+    }
+
+    fun isTreeVisibleFromEdge(coordinates: Coordinates): Boolean {
+        val tree = treeAt(coordinates)
+        val leftTrees = treesFrom(coordinates, LEFT)
+        val rightTrees = treesFrom(coordinates, RIGHT)
+        val topTrees = treesFrom(coordinates, UP)
+        val bottomTrees = treesFrom(coordinates, DOWN)
+
+        return leftTrees.all { tree > it } ||
+                rightTrees.all { tree > it } ||
+                topTrees.all { tree > it } ||
+                bottomTrees.all { tree > it }
+    }
+
+    fun treeViewingScore(coordinates: Coordinates): Int {
+        val tree = treeAt(coordinates)
+        val visibleLeft = treesFrom(coordinates, LEFT).visibleTrees(tree, LEFT)
+        val visibleRight = treesFrom(coordinates, RIGHT).visibleTrees(tree, RIGHT)
+        val visibleUp = treesFrom(coordinates, UP).visibleTrees(tree, UP)
+        val visibleDown = treesFrom(coordinates, DOWN).visibleTrees(tree, DOWN)
+
+        return visibleLeft.size * visibleRight.size * visibleUp.size * visibleDown.size
+    }
+
+    private fun treeAt(coordinates: Coordinates) = trees[coordinates.rowIdx][coordinates.colIdx]
+
+    private fun treesFrom(coordinates: Coordinates, direction: ViewDirection): List<Tree> {
+        val (rowIdx, colIdx) = coordinates
+        val width = trees[rowIdx].size
+        return when (direction) {
+            LEFT -> trees[rowIdx].sublistOrEmpty(0, colIdx)
+            UP -> trees.filterIndexed { y, _ -> y < rowIdx }.map { it[colIdx] }
+            RIGHT -> trees[rowIdx].sublistOrEmpty(colIdx + 1, width)
+            DOWN -> trees.filterIndexed { y, _ -> y > rowIdx }.map { it[colIdx] }
+        }
+    }
+}
+
+@JvmInline
+value class Tree(private val height: Int) {
+    operator fun compareTo(it: Tree): Int = height.compareTo(it.height)
+}
