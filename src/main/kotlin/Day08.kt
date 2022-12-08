@@ -19,7 +19,7 @@ private fun compute1(input: List<String>): Int {
 
 private fun compute2(input: List<String>): Int {
     val trees: Forrest = input.convert()
-    return  trees.max { coordinates ->
+    return trees.max { coordinates ->
         trees.treeViewingScore(coordinates)
     }
 }
@@ -33,22 +33,12 @@ private fun List<String>.convert(): Forrest {
     return Forrest(trees)
 }
 
-private fun List<Tree>.visibleTrees(tree: Tree, direction: ViewDirection): List<Tree> {
-    val indices = when (direction) {
-        LEFT, UP -> this.indices.reversed()
-        RIGHT, DOWN -> this.indices
-    }
-
+private fun List<Tree>.visibleTrees(tree: Tree): List<Tree> {
     val visibleTrees = mutableListOf<Tree>()
-    for (i in indices) {
-        val nextTree = this[i]
-        when {
-            nextTree >= tree -> {
-                visibleTrees.add(nextTree)
-                break
-            }
-
-            nextTree < tree -> visibleTrees.add(nextTree)
+    for (nextTree in this) {
+        visibleTrees.add(nextTree)
+        if (nextTree >= tree) {
+            break
         }
     }
     return visibleTrees
@@ -95,10 +85,10 @@ private data class Forrest(
 
     fun treeViewingScore(coordinates: Coordinates): Int {
         val tree = treeAt(coordinates)
-        val visibleLeft = treesFrom(coordinates, LEFT).visibleTrees(tree, LEFT)
-        val visibleRight = treesFrom(coordinates, RIGHT).visibleTrees(tree, RIGHT)
-        val visibleUp = treesFrom(coordinates, UP).visibleTrees(tree, UP)
-        val visibleDown = treesFrom(coordinates, DOWN).visibleTrees(tree, DOWN)
+        val visibleLeft = treesFrom(coordinates, LEFT).visibleTrees(tree)
+        val visibleRight = treesFrom(coordinates, RIGHT).visibleTrees(tree)
+        val visibleUp = treesFrom(coordinates, UP).visibleTrees(tree)
+        val visibleDown = treesFrom(coordinates, DOWN).visibleTrees(tree)
 
         return visibleLeft.size * visibleRight.size * visibleUp.size * visibleDown.size
     }
@@ -108,11 +98,12 @@ private data class Forrest(
     private fun treesFrom(coordinates: Coordinates, direction: ViewDirection): List<Tree> {
         val (rowIdx, colIdx) = coordinates
         val width = trees[rowIdx].size
+        val height = trees.size
         return when (direction) {
-            LEFT -> trees[rowIdx].sublistOrEmpty(0, colIdx)
-            UP -> trees.filterIndexed { y, _ -> y < rowIdx }.map { it[colIdx] }
+            LEFT -> trees[rowIdx].sublistOrEmpty(0, colIdx).reversed()
+            UP -> trees.sublistOrEmpty(0, rowIdx).map { it[colIdx] }.reversed()
             RIGHT -> trees[rowIdx].sublistOrEmpty(colIdx + 1, width)
-            DOWN -> trees.filterIndexed { y, _ -> y > rowIdx }.map { it[colIdx] }
+            DOWN -> trees.sublistOrEmpty(rowIdx + 1, height).map { it[colIdx] }
         }
     }
 }
