@@ -17,3 +17,9 @@ fun <R1, R2> execute(
 }
 
 private fun readInput(file: String) = File("src/main/resources/$file").readLines()
+
+fun <T> List<T>.sublistOrNull(fromIndex: Int, toIndex: Int) = try {
+    this.subList(fromIndex, toIndex)
+} catch (e: Exception) {
+    null
+}

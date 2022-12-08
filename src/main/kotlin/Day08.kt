@@ -8,7 +8,11 @@ fun main() {
 
 private fun compute1(input: List<String>): Int {
     val trees: Forrest = input
-        .map { row -> row.toCharArray().map { it.code } }
+        .map { row ->
+            row.toCharArray()
+                .map { it.toString() }
+                .map { it.toInt() }
+        }
 
     val visibleTrees = trees.flatMapIndexed { rowIdx, treeRow ->
         treeRow.filterIndexed { colIdx, _ ->
@@ -24,22 +28,22 @@ private fun compute2(input: List<String>): Int {
 }
 
 private fun Forrest.isVisible(rowIdx: Int, colIdx: Int): Boolean {
+    val width = this[rowIdx].size
     val tree = this[rowIdx][colIdx]
-    val neighbors = getNeighborHeights(rowIdx, colIdx)
-    return neighbors.any { it < tree }
-}
 
-private fun Forrest.getNeighborHeights(rowIdx: Int, colIdx: Int): List<Int> {
-    val row = this[rowIdx]
-    val topRow = getOrNull(rowIdx - 1).orEmpty()
-    val bottomRow = getOrNull(rowIdx - 1).orEmpty()
+    val leftTrees = this[rowIdx].sublistOrNull(0, colIdx) ?: listOf(-1)
+    val rightTrees = this[rowIdx].sublistOrNull(colIdx + 1, width) ?: listOf(-1)
+    val topTrees = this
+        .filterIndexed { y, _ -> y < rowIdx }
+        .map { it[colIdx] }
+        .ifEmpty { listOf(-1) }
+    val bottomTrees = this
+        .filterIndexed { y, _ -> y > rowIdx }
+        .map { it[colIdx] }
+        .ifEmpty { listOf(-1) }
 
-    return listOf(
-        row.getOrNull(colIdx - 1) ?: 0, // left
-        topRow.getOrNull(colIdx) ?: 0, // top
-        row.getOrNull(colIdx + 1) ?: 0, // right
-        bottomRow.getOrNull(colIdx) ?: 0, // bottom
-    )
+    return leftTrees.all { tree > it } || rightTrees.all { tree > it } || topTrees.all { tree > it } || bottomTrees.all { tree > it }
+
 }
 
 typealias Forrest = List<List<Int>>

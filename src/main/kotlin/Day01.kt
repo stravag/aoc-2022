@@ -30,7 +30,7 @@ private fun part2(input: List<String>): Int {
 }
 
 private fun elfCalories(offset: Int = 0, input: List<String>): List<Int> {
-    val remainingElfCalories = input.safeSubList(offset, input.size)
+    val remainingElfCalories = input.sublistOrNull(offset, input.size)
         ?: return emptyList()
 
     val elfCalories = remainingElfCalories
@@ -43,10 +43,3 @@ private fun elfCalories(offset: Int = 0, input: List<String>): List<Int> {
 }
 
 private fun String.toIntOrZero() = this.ifEmpty { "0" }.toInt()
-
-private fun <T> List<T>.safeSubList(fromIndex: Int, toIndex: Int) = try {
-    this.subList(fromIndex, toIndex)
-} catch (e: Exception) {
-    null
-}
-
