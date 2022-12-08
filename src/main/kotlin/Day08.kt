@@ -12,7 +12,7 @@ fun main() {
 
 private fun compute1(input: List<String>): Int {
     val forrest = input.convert()
-    return forrest.count { coordinates ->
+    return forrest.countTrue { coordinates ->
         forrest.isTreeVisibleFromEdge(coordinates)
     }
 }
@@ -72,8 +72,8 @@ private data class Forrest(
         }
     }
 
-    fun <R> count(transform: (Coordinates) -> R): Int {
-        return map(transform).count()
+    fun countTrue(transform: (Coordinates) -> Boolean): Int {
+        return map(transform).count { it }
     }
 
     fun max(transform: (Coordinates) -> Int): Int {
