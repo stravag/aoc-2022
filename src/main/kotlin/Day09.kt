@@ -60,68 +60,31 @@ private class Rope(
         for (i in 1 until positions.size) {
             val partInfront = positions[i - 1]
             val part = positions[i]
-            if (!areAdjacent(part, partInfront)) {
-                positions[i] = part.follow(partInfront, direction)
-            } else {
-                break
-            }
+            val followed = part.follow(partInfront, direction)
+            positions[i] = followed
         }
     }
 
     fun tailPos(): Position = positions.last()
 }
 
-private fun areAdjacent(pos1: Position, pos2: Position): Boolean {
-    return abs(pos1.x - pos2.x) <= 1 && abs(pos1.y - pos2.y) <= 1
+private fun Position.follow(other: Position, direction: Char): Position {
+    val xDiff = abs(other.x - x)
+    val yDiff = abs(other.y - y)
+    return if (xDiff > 1 || yDiff > 1) {
+        positionBehind(other, direction)
+    } else {
+        this
+    }
 }
 
-private fun Position.follow(other: Position, direction: Char): Position {
-    return if (areAdjacent(this, other)) {
-        this
-    } else {
-        when (direction) {
-            'R' -> {
-                if (other.y == y && other.x != x) {
-                    move(direction)
-                } else if (abs(other.x - x) > 1) {
-                    Position(other.x - 1, other.y)
-                } else {
-                    this
-                }
-            }
-
-            'L' -> {
-                if (other.y == y && other.x != x) {
-                    move(direction)
-                } else if (abs(other.x - x) > 1) {
-                    Position(other.x + 1, other.y)
-                } else {
-                    this
-                }
-            }
-
-            'U' -> {
-                if (other.x == x && other.y != y) {
-                    move(direction)
-                } else if (abs(other.y - y) > 1) {
-                    Position(other.x, other.y - 1)
-                } else {
-                    this
-                }
-            }
-
-            'D' -> {
-                if (other.x == x && other.y != y) {
-                    move(direction)
-                } else if (abs(other.y - y) > 1) {
-                    Position(other.x, other.y + 1)
-                } else {
-                    this
-                }
-            }
-
-            else -> throw IllegalArgumentException("unknown move $direction")
-        }
+private fun positionBehind(other: Position, direction: Char): Position {
+    return when (direction) {
+        'R' -> Position(other.x - 1, other.y)
+        'L' -> Position(other.x + 1, other.y)
+        'U' -> Position(other.x, other.y - 1)
+        'D' -> Position(other.x, other.y + 1)
+        else -> throw IllegalArgumentException("unknown move $direction")
     }
 }
 
