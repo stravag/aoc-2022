@@ -30,7 +30,6 @@ fun main() {
     // follow down-left
     check(P(0, 0).follow(P(-1, -2)) == P(-1, -1))
 
-    /*
     execute(
         day = "Day09",
         part = Part(
@@ -39,13 +38,12 @@ fun main() {
             compute = { compute(it, 2) }
         ),
     )
-     */
 
     execute(
         day = "Day09",
         part = Part(
             expectedTestResult = 36,
-            expectedResult = 2527,
+            expectedResult = 2522,
             compute = { compute(it, 10) }
         ),
         partTestData = """
@@ -107,26 +105,41 @@ private fun Position.follow(other: Position): Position {
     }
 }
 
-private fun Position.putBehind(other: Position): Position {
-    val xDiff = other.x - x
-    val yDiff = other.y - y
-    return if (abs(xDiff) > abs(yDiff)) {
-        if (xDiff > 0) {
+private fun Position.putBehind(o: Position): Position {
+    var newX = x
+    var newY = y
+    val xDiff = abs(o.x - x)
+    val yDiff = abs(o.y - y)
+    if ((xDiff > 1 && yDiff > 0) || xDiff > 0 && yDiff > 1) {
+        if (o.x < x) newX -= 1 else newX += 1
+        if (o.y < y) newY -= 1 else newY += 1
+    } else if (xDiff > 1) {
+        if (o.x < x) newX -= 1 else newX += 1
+    } else if (yDiff > 1) {
+        if (o.y < y) newY -= 1 else newY += 1
+    }
+
+    return Position(newX, newY)
+
+    /*
+    return if (xDiff > yDiff) {
+        if (o.x - x > 0) {
             // other more to the right of this: put on its left
-            Position(other.x - 1, other.y)
+            Position(o.x - 1, o.y)
         } else {
             // other more to the left of this: put on its right
-            Position(other.x + 1, other.y)
+            Position(o.x + 1, o.y)
         }
     } else {
-        if (yDiff > 0) {
+        if (o.y - y > 0) {
             // other more to the top of this: put below it
-            Position(other.x, other.y - 1)
+            Position(o.x, o.y - 1)
         } else {
             // other more to the bottom of this: put above it
-            Position(other.x, other.y + 1)
+            Position(o.x, o.y + 1)
         }
     }
+     */
 }
 
 private data class Position(val x: Int, val y: Int) {
