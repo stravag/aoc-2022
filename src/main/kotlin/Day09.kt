@@ -5,7 +5,7 @@ fun main() {
         day = "Day09",
         part1 = Part(
             expectedTestResult = 13,
-            expectedResult = 6513,
+            expectedResult = 6212,
             compute = ::compute1
         ),
         part2 = Part(
@@ -30,7 +30,7 @@ private fun compute1(input: List<String>): Int {
             headPos = headPos.move(direction)
             tailPos = when (direction) {
                 'R' -> {
-                    if (headPos.y == tailPos.y) {
+                    if (headPos.y == tailPos.y && headPos.x != tailPos.x) {
                         tailPos.move(direction)
                     } else if (abs(headPos.x - tailPos.x) > 1) {
                         Position(headPos.x - 1, headPos.y)
@@ -40,7 +40,7 @@ private fun compute1(input: List<String>): Int {
                 }
 
                 'L' -> {
-                    if (headPos.y == tailPos.y) {
+                    if (headPos.y == tailPos.y && headPos.x != tailPos.x) {
                         tailPos.move(direction)
                     } else if (abs(headPos.x - tailPos.x) > 1) {
                         Position(headPos.x + 1, headPos.y)
@@ -50,7 +50,7 @@ private fun compute1(input: List<String>): Int {
                 }
 
                 'U' -> {
-                    if (headPos.x == tailPos.x) {
+                    if (headPos.x == tailPos.x && headPos.y != tailPos.y) {
                         tailPos.move(direction)
                     } else if (abs(headPos.y - tailPos.y) > 1) {
                         Position(headPos.x, headPos.y - 1)
@@ -60,7 +60,7 @@ private fun compute1(input: List<String>): Int {
                 }
 
                 'D' -> {
-                    if (headPos.y == tailPos.y) {
+                    if (headPos.x == tailPos.x && headPos.y != tailPos.y) {
                         tailPos.move(direction)
                     } else if (abs(headPos.y - tailPos.y) > 1) {
                         Position(headPos.x, headPos.y + 1)
