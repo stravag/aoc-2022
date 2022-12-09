@@ -1,5 +1,21 @@
 import java.io.File
 
+fun <R> execute(
+    day: String,
+    part: Part<R>,
+    partTestData: List<String> = readInput("${day}_test.txt"),
+) {
+    val puzzleData = readInput("${day}.txt")
+    val result1 = runPart(
+        partTestData,
+        puzzleData,
+        part.compute,
+        part.expectedTestResult,
+        part.expectedResult
+    )
+    println("part1: $result1")
+}
+
 fun <R1, R2> execute(
     day: String,
     part1: Part<R1>,

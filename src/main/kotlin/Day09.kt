@@ -3,16 +3,20 @@ import kotlin.math.abs
 fun main() {
     execute(
         day = "Day09",
-        part1 = Part(
+        part = Part(
             expectedTestResult = 13,
             expectedResult = 6212,
             compute = ::compute1
         ),
-        part2 = Part(
+    )
+
+    execute(
+        day = "Day09",
+        part = Part(
             expectedTestResult = 1,
             expectedResult = 0,
             compute = ::compute2
-        )
+        ),
     )
 }
 
@@ -50,75 +54,76 @@ private class Rope(
     val positions: MutableList<Position> = MutableList(size) { Position(0, 0) }
 ) {
     fun move(direction: Char) {
-        var lastMoved = true
-        var i = 0
-        while (lastMoved && i < positions.size - 1) {
-            val (oldHead, oldTail) = positions.subList(i, i + 2)
-            val (newHead, newTail) = (oldHead to oldTail).next(direction)
-            lastMoved = oldTail != newTail
-            positions[i] = newHead
-            positions[i + 1] = newTail
-            i++
+        val newHead = positions.first().move(direction)
+        positions[0] = newHead
+
+        for (i in 1 until positions.size) {
+            val partInfront = positions[i - 1]
+            val part = positions[i]
+            if (!areAdjacent(part, partInfront)) {
+                positions[i] = part.follow(partInfront, direction)
+            } else {
+                break
+            }
         }
     }
 
     fun tailPos(): Position = positions.last()
 }
 
-private fun Pair<Position, Position>.next(direction: Char): Pair<Position, Position> {
-    val (oldHead, oldTail) = this
-    val newHead = oldHead.move(direction)
-    val newTail = if (abs(newHead.x - oldTail.x) > 1 || abs(newHead.y - oldTail.y) > 1) {
+private fun areAdjacent(pos1: Position, pos2: Position): Boolean {
+    return abs(pos1.x - pos2.x) <= 1 && abs(pos1.y - pos2.y) <= 1
+}
+
+private fun Position.follow(other: Position, direction: Char): Position {
+    return if (areAdjacent(this, other)) {
+        this
+    } else {
         when (direction) {
             'R' -> {
-                if (newHead.y == oldTail.y && newHead.x != oldTail.x) {
-                    oldTail.move(direction)
-                } else if (abs(newHead.x - oldTail.x) > 1) {
-                    Position(newHead.x - 1, newHead.y)
+                if (other.y == y && other.x != x) {
+                    move(direction)
+                } else if (abs(other.x - x) > 1) {
+                    Position(other.x - 1, other.y)
                 } else {
-                    oldTail
+                    this
                 }
             }
 
             'L' -> {
-                if (newHead.y == oldTail.y && newHead.x != oldTail.x) {
-                    oldTail.move(direction)
-                } else if (abs(newHead.x - oldTail.x) > 1) {
-                    Position(newHead.x + 1, newHead.y)
+                if (other.y == y && other.x != x) {
+                    move(direction)
+                } else if (abs(other.x - x) > 1) {
+                    Position(other.x + 1, other.y)
                 } else {
-                    oldTail
+                    this
                 }
             }
 
             'U' -> {
-                if (newHead.x == oldTail.x && newHead.y != oldTail.y) {
-                    oldTail.move(direction)
-                } else if (abs(newHead.y - oldTail.y) > 1) {
-                    Position(newHead.x, newHead.y - 1)
+                if (other.x == x && other.y != y) {
+                    move(direction)
+                } else if (abs(other.y - y) > 1) {
+                    Position(other.x, other.y - 1)
                 } else {
-                    oldTail
+                    this
                 }
             }
 
             'D' -> {
-                if (newHead.x == oldTail.x && newHead.y != oldTail.y) {
-                    oldTail.move(direction)
-                } else if (abs(newHead.y - oldTail.y) > 1) {
-                    Position(newHead.x, newHead.y + 1)
+                if (other.x == x && other.y != y) {
+                    move(direction)
+                } else if (abs(other.y - y) > 1) {
+                    Position(other.x, other.y + 1)
                 } else {
-                    oldTail
+                    this
                 }
             }
 
             else -> throw IllegalArgumentException("unknown move $direction")
         }
-    } else {
-        oldTail
     }
-
-    return newHead to newTail
 }
-
 
 private data class Position(val x: Int, val y: Int) {
     fun move(direction: Char): Position {
