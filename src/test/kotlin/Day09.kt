@@ -10,9 +10,7 @@ object Day09 : AbstractDay() {
         assertEquals(6212, compute(puzzleInput, 2))
 
         assertEquals(1, compute(testInput, 10))
-        assertEquals(
-            36, compute(
-                """
+        assertEquals(36, compute("""
             R 5
             U 8
             L 8
@@ -21,9 +19,7 @@ object Day09 : AbstractDay() {
             D 10
             L 25
             U 20
-        """.trimIndent().lines(), 10
-            )
-        )
+        """.trimIndent().lines(), 10))
         assertEquals(2522, compute(puzzleInput, 10))
     }
 
@@ -43,18 +39,17 @@ object Day09 : AbstractDay() {
     }
 
     private class Rope(
-        private val positions: MutableList<Position>
+        size: Int,
+        val positions: MutableList<Position> = MutableList(size) { Position(0, 0) }
     ) {
-        constructor(ropeSize: Int) : this(MutableList(ropeSize) { Position(0, 0) })
-
         fun move(direction: String) {
             val newHead = positions.first().move(direction)
             positions[0] = newHead
 
             for (i in 1 until positions.size) {
-                val partInFront = positions[i - 1]
+                val partInfront = positions[i - 1]
                 val part = positions[i]
-                val followed = part.follow(partInFront)
+                val followed = part.follow(partInfront)
                 positions[i] = followed
             }
         }
@@ -63,23 +58,52 @@ object Day09 : AbstractDay() {
     }
 
     fun Position.follow(other: Position): Position {
-        fun Position.adjustX(other: Position): Int = if (x < other.x) x + 1 else x - 1
-        fun Position.adjustY(other: Position): Int = if (y < other.y) y + 1 else y - 1
+        val xDiff = other.x - x
+        val yDiff = other.y - y
+        val isAdjacent = abs(xDiff) <= 1 && abs(yDiff) <= 1
 
-        val xDiff = abs(other.x - x)
-        val yDiff = abs(other.y - y)
-        var (newX, newY) = this
+        return if (isAdjacent) {
+            this
+        } else {
+            this.putBehind(other)
+        }
+    }
 
-        if (xDiff == 2 && yDiff > 0 || yDiff == 2 && xDiff > 0) {
-            newX = adjustX(other)
-            newY = adjustY(other)
-        } else if (xDiff == 2) {
-            newX = adjustX(other)
-        } else if (yDiff == 2) {
-            newY = adjustY(other)
+    private fun Position.putBehind(o: Position): Position {
+        val xDiff = abs(o.x - x)
+        val yDiff = abs(o.y - y)
+
+        var newX = x
+        var newY = y
+        if ((xDiff > 1 && yDiff > 0) || xDiff > 0 && yDiff > 1) {
+            if (o.x < x) newX -= 1 else newX += 1
+            if (o.y < y) newY -= 1 else newY += 1
+        } else if (xDiff > 1) {
+            if (o.x < x) newX -= 1 else newX += 1
+        } else if (yDiff > 1) {
+            if (o.y < y) newY -= 1 else newY += 1
         }
 
         return Position(newX, newY)
+
+        /*
+    return if (xDiff > yDiff) {
+        if (o.x - x > 0) {
+            // other more to the right of this: put on its left
+            Position(o.x - 1, o.y)
+        } else {
+            // other more to the left of this: put on its right
+            Position(o.x + 1, o.y)
+        }
+    } else {
+        if (o.y - y > 0) {
+            // other more to the top of this: put below it
+            Position(o.x, o.y - 1)
+        } else {
+            // other more to the bottom of this: put above it
+            Position(o.x, o.y + 1)
+        }
+    }*/
     }
 
     data class Position(val x: Int, val y: Int) {
