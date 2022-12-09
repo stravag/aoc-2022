@@ -89,32 +89,7 @@ object Day09 : AbstractDay() {
             if (o.y < y) newY -= 1 else newY += 1
         }
 
-        val type1 = Position(newX, newY)
-
-
-        val type2 = if (xDiff > yDiff) {
-            if (o.x - x > 0) {
-                // other more to the right of this: put on its left
-                Position(o.x - 1, o.y)
-            } else {
-                // other more to the left of this: put on its right
-                Position(o.x + 1, o.y)
-            }
-        } else {
-            if (o.y - y > 0) {
-                // other more to the top of this: put below it
-                Position(o.x, o.y - 1)
-            } else {
-                // other more to the bottom of this: put above it
-                Position(o.x, o.y + 1)
-            }
-        }
-
-        if (type1 != type2) {
-            println("WTF? Leader: $o / Follower: $this")
-        }
-
-        return type1
+        return Position(newX, newY)
     }
 
     data class Position(val x: Int, val y: Int) {
