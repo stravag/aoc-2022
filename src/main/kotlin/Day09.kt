@@ -81,17 +81,19 @@ private fun Position.putBehind(other: Position): Position {
     val xDiff = other.x - x
     val yDiff = other.y - y
     return if (abs(xDiff) > abs(yDiff)) {
-        // L/R
         if (xDiff > 0) {
+            // other more to the right of this: put on its left
             Position(other.x - 1, other.y)
         } else {
+            // other more to the left of this: put on its right
             Position(other.x + 1, other.y)
         }
     } else {
-        // U/D
         if (yDiff > 0) {
+            // other more to the top of this: put below it
             Position(other.x, other.y - 1)
         } else {
+            // other more to the bottom of this: put above it
             Position(other.x, other.y + 1)
         }
     }
