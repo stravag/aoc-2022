@@ -5,7 +5,7 @@ fun main() {
         day = "Day09",
         part1 = Part(
             expectedTestResult = 13,
-            expectedResult = 0,
+            expectedResult = 6513,
             compute = ::compute1
         ),
         part2 = Part(
@@ -18,58 +18,60 @@ fun main() {
 
 private fun compute1(input: List<String>): Int {
 
-    fun Pair<Position, Position>.next(step: Step): Pair<Position, Position> {
+    fun Pair<Position, Position>.next(direction: Char): Pair<Position, Position> {
         val (tailStart, headStart) = this
         var tailPos = tailStart
         var headPos = headStart
 
-        List(step.steps) { step.direction }
-            .forEach { direction ->
-                headPos = headPos.move(direction)
-                tailPos = when (direction) {
-                    'R' -> {
-                        if (headPos.y == tailPos.y) {
-                            tailPos.move(direction)
-                        } else if (abs(headPos.x - tailPos.x) > 1) {
-                            Position(headPos.x - 1, headPos.y)
-                        } else {
-                            tailPos
-                        }
+        if (tailPos == headPos) {
+            // first step, tail stays same
+            headPos = headPos.move(direction)
+        } else {
+            headPos = headPos.move(direction)
+            tailPos = when (direction) {
+                'R' -> {
+                    if (headPos.y == tailPos.y) {
+                        tailPos.move(direction)
+                    } else if (abs(headPos.x - tailPos.x) > 1) {
+                        Position(headPos.x - 1, headPos.y)
+                    } else {
+                        tailPos
                     }
-
-                    'L' -> {
-                        if (headPos.y == tailPos.y) {
-                            tailPos.move(direction)
-                        } else if (abs(headPos.x - tailPos.x) > 1) {
-                            Position(headPos.x + 1, headPos.y)
-                        } else {
-                            tailPos
-                        }
-                    }
-
-                    'U' -> {
-                        if (headPos.x == tailPos.x) {
-                            tailPos.move(direction)
-                        } else if (abs(headPos.y - tailPos.y) > 1) {
-                            Position(headPos.x, headPos.y - 1)
-                        } else {
-                            tailPos
-                        }
-                    }
-
-                    'D' -> {
-                        if (headPos.y == tailPos.y) {
-                            tailPos.move(direction)
-                        } else if (abs(headPos.y - tailPos.y) > 1) {
-                            Position(headPos.x, headPos.y + 1)
-                        } else {
-                            tailPos
-                        }
-                    }
-
-                    else -> throw IllegalArgumentException("unknown move $direction")
                 }
+
+                'L' -> {
+                    if (headPos.y == tailPos.y) {
+                        tailPos.move(direction)
+                    } else if (abs(headPos.x - tailPos.x) > 1) {
+                        Position(headPos.x + 1, headPos.y)
+                    } else {
+                        tailPos
+                    }
+                }
+
+                'U' -> {
+                    if (headPos.x == tailPos.x) {
+                        tailPos.move(direction)
+                    } else if (abs(headPos.y - tailPos.y) > 1) {
+                        Position(headPos.x, headPos.y - 1)
+                    } else {
+                        tailPos
+                    }
+                }
+
+                'D' -> {
+                    if (headPos.y == tailPos.y) {
+                        tailPos.move(direction)
+                    } else if (abs(headPos.y - tailPos.y) > 1) {
+                        Position(headPos.x, headPos.y + 1)
+                    } else {
+                        tailPos
+                    }
+                }
+
+                else -> throw IllegalArgumentException("unknown move $direction")
             }
+        }
 
         return tailPos to headPos
     }
@@ -79,8 +81,9 @@ private fun compute1(input: List<String>): Int {
     var last = start to start
     input
         .map { Step.of(it) }
-        .forEach { step ->
-            last = last.next(step)
+        .flatMap { step -> List(step.steps) { step.direction } }
+        .forEach { direction ->
+            last = last.next(direction)
             visited.add(last.first)
         }
 
