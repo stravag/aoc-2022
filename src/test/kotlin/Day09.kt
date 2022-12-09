@@ -29,87 +29,61 @@ object Day09 : AbstractDay() {
 
     private fun compute(input: List<String>, ropeSize: Int): Int {
         val rope = Rope(ropeSize)
-        val visited = mutableSetOf(rope.tailPos())
+        val visited = mutableSetOf(rope.tail)
         input
-            .map { Step.of(it) }
-            .forEach { (direction, steps) ->
-                repeat(steps) {
-                    rope.move(direction)
-                    visited.add(rope.tailPos())
-                }
+            .flatMap { it.parse() }
+            .forEach { direction ->
+                rope.move(direction)
+                visited.add(rope.tail)
             }
 
         return visited.size
     }
 
-    private class Rope(
-        private val positions: MutableList<Position>
-    ) {
-        constructor(ropeSize: Int) : this(MutableList(ropeSize) { Position(0, 0) })
+    private class Rope(private val positions: List<Position>) {
+
+        constructor(ropeSize: Int) : this(List(ropeSize) { Position(0, 0) })
 
         fun move(direction: String) {
-            val newHead = positions.first().move(direction)
-            positions[0] = newHead
-
+            head.move(direction)
             for (i in 1 until positions.size) {
-                val partInfront = positions[i - 1]
-                val part = positions[i]
-                val followed = part.follow(partInfront)
-                positions[i] = followed
+                positions[i].follow(positions[i - 1])
             }
         }
 
-        fun tailPos(): Position = positions.last()
+        private val head: Position get() = positions.first()
+        val tail: Position get() = positions.last().copy()
     }
 
-    fun Position.follow(other: Position): Position {
-        val xDiff = other.x - x
-        val yDiff = other.y - y
-        val isAdjacent = abs(xDiff) <= 1 && abs(yDiff) <= 1
-
-        return if (isAdjacent) {
-            this
-        } else {
-            this.putBehind(other)
-        }
-    }
-
-    private fun Position.putBehind(o: Position): Position {
-        val xDiff = abs(o.x - x)
-        val yDiff = abs(o.y - y)
-
-        var newX = x
-        var newY = y
-        if ((xDiff > 1 && yDiff > 0) || xDiff > 0 && yDiff > 1) {
-            if (o.x < x) newX -= 1 else newX += 1
-            if (o.y < y) newY -= 1 else newY += 1
-        } else if (xDiff > 1) {
-            if (o.x < x) newX -= 1 else newX += 1
-        } else if (yDiff > 1) {
-            if (o.y < y) newY -= 1 else newY += 1
-        }
-
-        return Position(newX, newY)
-    }
-
-    data class Position(val x: Int, val y: Int) {
-        fun move(direction: String): Position {
-            return when (direction) {
-                "R" -> Position(x + 1, y)
-                "L" -> Position(x - 1, y)
-                "U" -> Position(x, y + 1)
-                "D" -> Position(x, y - 1)
-                else -> throw IllegalArgumentException("unknown move $direction")
+    data class Position(var x: Int, var y: Int) {
+        fun move(direction: String) {
+            when (direction) {
+                "R" -> x++
+                "L" -> x--
+                "U" -> y++
+                "D" -> y--
             }
         }
+
+        fun follow(other: Position) {
+            val xDiff = abs(other.x - x)
+            val yDiff = abs(other.y - y)
+            if (xDiff == 2 && yDiff > 0 || yDiff == 2 && xDiff > 0) {
+                adjustX(other)
+                adjustY(other)
+            } else if (xDiff == 2) {
+                adjustX(other)
+            } else if (yDiff == 2) {
+                adjustY(other)
+            }
+        }
+
+        private fun adjustX(other: Position): Int = if (x < other.x) x++ else x--
+        private fun adjustY(other: Position): Int = if (y < other.y) y++ else y--
     }
 
-    data class Step(
-        val direction: String,
-        val steps: Int,
-    ) {
-        companion object {
-            fun of(s: String): Step = s.split(" ").let { (m, i) -> Step(m.first().toString(), i.toInt()) }
-        }
+    private fun String.parse(): List<String> {
+        val (direction, cnt) = split(" ")
+        return List(cnt.toInt()) { direction }
     }
 }
