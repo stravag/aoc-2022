@@ -13,7 +13,7 @@ fun <R> execute(
         part.expectedTestResult,
         part.expectedResult
     )
-    println("part1: $result1")
+    println("result: $result1")
 }
 
 fun <R1, R2> execute(
