@@ -17,22 +17,21 @@ fun main() {
 }
 
 private fun compute1(input: List<String>): Int {
-    val start = Position(0, 0)
-    val visited = mutableSetOf(start)
-    var last = start to start
+    val rope = Rope(2)
+    val visited = mutableSetOf(rope.tailPos())
     input
         .map { Step.of(it) }
         .flatMap { step -> List(step.steps) { step.direction } }
         .forEach { direction ->
-            last = last.next(direction)
-            visited.add(last.first)
+            rope.move(direction)
+            visited.add(rope.tailPos())
         }
 
     return visited.size
 }
 
 private fun compute2(input: List<String>): Int {
-    val rope = Rope()
+    val rope = Rope(10)
     val visited = mutableSetOf(rope.tailPos())
     input
         .map { Step.of(it) }
@@ -46,8 +45,9 @@ private fun compute2(input: List<String>): Int {
 }
 
 
-private data class Rope(
-    val positions: MutableList<Position> = MutableList(10) { Position(0, 0) }
+private class Rope(
+    size: Int,
+    val positions: MutableList<Position> = MutableList(size) { Position(0, 0) }
 ) {
     fun move(direction: Char) {
         var lastMoved = true
@@ -63,7 +63,7 @@ private data class Rope(
         }
     }
 
-    fun List<Position>.toPair() = this[0] to this[1]
+    fun List<Position>.toPair() = this[1] to this[0]
 
     fun tailPos(): Position = positions.last()
 }
@@ -73,11 +73,9 @@ private fun Pair<Position, Position>.next(direction: Char): Pair<Position, Posit
     var tailPos = tailStart
     var headPos = headStart
 
-    if (tailPos == headPos) {
-        // first step, tail stays same
-        headPos = headPos.move(direction)
-    } else {
-        headPos = headPos.move(direction)
+    headPos = headPos.move(direction)
+    // tail needs to follow
+    if (abs(headPos.x - tailPos.x) > 1 || abs(headPos.y - tailPos.y) > 1) {
         tailPos = when (direction) {
             'R' -> {
                 if (headPos.y == tailPos.y && headPos.x != tailPos.x) {
