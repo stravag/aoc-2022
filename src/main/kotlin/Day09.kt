@@ -1,6 +1,34 @@
 import kotlin.math.abs
 
+private typealias P = Position
+
 fun main() {
+
+    // follow adjacent
+    check(P(0, 0).follow(P(0, 0)) == P(0, 0))
+    check(P(0, 0).follow(P(1, 1)) == P(0, 0))
+    check(P(0, 0).follow(P(1, 0)) == P(0, 0))
+    check(P(0, 0).follow(P(0, -1)) == P(0, 0))
+    check(P(0, 0).follow(P(-1, -1)) == P(0, 0))
+    check(P(0, 0).follow(P(-1, 0)) == P(0, 0))
+
+    // follow right
+    check(P(0, 0).follow(P(2, 0)) == P(1, 0))
+    // follow left
+    check(P(0, 0).follow(P(-2, 0)) == P(-1, 0))
+    // follow up
+    check(P(0, 0).follow(P(0, 2)) == P(0, 1))
+    // follow down
+    check(P(0, 0).follow(P(0, -2)) == P(0, -1))
+
+    // follow up-right
+    check(P(0, 0).follow(P(1, 2)) == P(1, 1))
+    // follow up-left
+    check(P(0, 0).follow(P(-1, 2)) == P(-1, 1))
+    // follow down-right
+    check(P(0, 0).follow(P(1, -2)) == P(1, -1))
+    // follow down-left
+    check(P(0, 0).follow(P(-1, -2)) == P(-1, -1))
 
     /*
     execute(
@@ -17,7 +45,7 @@ fun main() {
         day = "Day09",
         part = Part(
             expectedTestResult = 36,
-            expectedResult = 2499,
+            expectedResult = 2527,
             compute = { compute(it, 10) }
         ),
         partTestData = """
@@ -68,12 +96,14 @@ private class Rope(
 }
 
 private fun Position.follow(other: Position): Position {
-    val xDiff = abs(other.x - x)
-    val yDiff = abs(other.y - y)
-    return if (xDiff > 1 || yDiff > 1) {
-        this.putBehind(other)
-    } else {
+    val xDiff = other.x - x
+    val yDiff = other.y - y
+    val isAdjacent = abs(xDiff) <= 1 && abs(yDiff) <= 1
+
+    return if (isAdjacent) {
         this
+    } else {
+        this.putBehind(other)
     }
 }
 
