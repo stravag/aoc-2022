@@ -16,10 +16,20 @@ fun main() {
     execute(
         day = "Day09",
         part = Part(
-            expectedTestResult = 1,
+            expectedTestResult = 36,
             expectedResult = 2499,
             compute = { compute(it, 10) }
         ),
+        partTestData = """
+            R 5
+            U 8
+            L 8
+            D 3
+            R 17
+            D 10
+            L 25
+            U 20
+        """.trimIndent().lines()
     )
 }
 
@@ -28,10 +38,11 @@ private fun compute(input: List<String>, ropeSize: Int): Int {
     val visited = mutableSetOf(rope.tailPos())
     input
         .map { Step.of(it) }
-        .flatMap { step -> List(step.steps) { step.direction } }
-        .forEach { direction ->
-            rope.move(direction)
-            visited.add(rope.tailPos())
+        .forEach { (direction, steps) ->
+            repeat(steps) {
+                rope.move(direction)
+                visited.add(rope.tailPos())
+            }
         }
 
     return visited.size
@@ -41,7 +52,7 @@ private class Rope(
     size: Int,
     val positions: MutableList<Position> = MutableList(size) { Position(0, 0) }
 ) {
-    fun move(direction: Char) {
+    fun move(direction: String) {
         val newHead = positions.first().move(direction)
         positions[0] = newHead
 
@@ -87,22 +98,22 @@ private fun Position.putBehind(other: Position): Position {
 }
 
 private data class Position(val x: Int, val y: Int) {
-    fun move(direction: Char): Position {
+    fun move(direction: String): Position {
         return when (direction) {
-            'R' -> Position(x + 1, y)
-            'L' -> Position(x - 1, y)
-            'U' -> Position(x, y + 1)
-            'D' -> Position(x, y - 1)
+            "R" -> Position(x + 1, y)
+            "L" -> Position(x - 1, y)
+            "U" -> Position(x, y + 1)
+            "D" -> Position(x, y - 1)
             else -> throw IllegalArgumentException("unknown move $direction")
         }
     }
 }
 
 data class Step(
-    val direction: Char,
+    val direction: String,
     val steps: Int,
 ) {
     companion object {
-        fun of(s: String): Step = s.split(" ").let { (m, i) -> Step(m.first(), i.toInt()) }
+        fun of(s: String): Step = s.split(" ").let { (m, i) -> Step(m.first().toString(), i.toInt()) }
     }
 }
