@@ -53,75 +53,70 @@ private class Rope(
         var lastMoved = true
         var i = 0
         while (lastMoved && i < positions.size - 1) {
-            val window = positions.subList(i, i + 2).toPair()
-            val oldTail = window.first
-            val (newTail, newHead) = window.next(direction)
+            val (oldHead, oldTail) = positions.subList(i, i + 2)
+            val (newHead, newTail) = (oldHead to oldTail).next(direction)
             lastMoved = oldTail != newTail
             positions[i] = newHead
-            positions[i+1] = newTail
+            positions[i + 1] = newTail
             i++
         }
     }
-
-    fun List<Position>.toPair() = this[1] to this[0]
 
     fun tailPos(): Position = positions.last()
 }
 
 private fun Pair<Position, Position>.next(direction: Char): Pair<Position, Position> {
-    val (tailStart, headStart) = this
-    var tailPos = tailStart
-    var headPos = headStart
-
-    headPos = headPos.move(direction)
-    // tail needs to follow
-    if (abs(headPos.x - tailPos.x) > 1 || abs(headPos.y - tailPos.y) > 1) {
-        tailPos = when (direction) {
+    val (oldHead, oldTail) = this
+    val newHead = oldHead.move(direction)
+    val newTail = if (abs(newHead.x - oldTail.x) > 1 || abs(newHead.y - oldTail.y) > 1) {
+        when (direction) {
             'R' -> {
-                if (headPos.y == tailPos.y && headPos.x != tailPos.x) {
-                    tailPos.move(direction)
-                } else if (abs(headPos.x - tailPos.x) > 1) {
-                    Position(headPos.x - 1, headPos.y)
+                if (newHead.y == oldTail.y && newHead.x != oldTail.x) {
+                    oldTail.move(direction)
+                } else if (abs(newHead.x - oldTail.x) > 1) {
+                    Position(newHead.x - 1, newHead.y)
                 } else {
-                    tailPos
+                    oldTail
                 }
             }
 
             'L' -> {
-                if (headPos.y == tailPos.y && headPos.x != tailPos.x) {
-                    tailPos.move(direction)
-                } else if (abs(headPos.x - tailPos.x) > 1) {
-                    Position(headPos.x + 1, headPos.y)
+                if (newHead.y == oldTail.y && newHead.x != oldTail.x) {
+                    oldTail.move(direction)
+                } else if (abs(newHead.x - oldTail.x) > 1) {
+                    Position(newHead.x + 1, newHead.y)
                 } else {
-                    tailPos
+                    oldTail
                 }
             }
 
             'U' -> {
-                if (headPos.x == tailPos.x && headPos.y != tailPos.y) {
-                    tailPos.move(direction)
-                } else if (abs(headPos.y - tailPos.y) > 1) {
-                    Position(headPos.x, headPos.y - 1)
+                if (newHead.x == oldTail.x && newHead.y != oldTail.y) {
+                    oldTail.move(direction)
+                } else if (abs(newHead.y - oldTail.y) > 1) {
+                    Position(newHead.x, newHead.y - 1)
                 } else {
-                    tailPos
+                    oldTail
                 }
             }
 
             'D' -> {
-                if (headPos.x == tailPos.x && headPos.y != tailPos.y) {
-                    tailPos.move(direction)
-                } else if (abs(headPos.y - tailPos.y) > 1) {
-                    Position(headPos.x, headPos.y + 1)
+                if (newHead.x == oldTail.x && newHead.y != oldTail.y) {
+                    oldTail.move(direction)
+                } else if (abs(newHead.y - oldTail.y) > 1) {
+                    Position(newHead.x, newHead.y + 1)
                 } else {
-                    tailPos
+                    oldTail
                 }
             }
 
             else -> throw IllegalArgumentException("unknown move $direction")
         }
+    } else {
+        oldTail
     }
 
-    return tailPos to headPos
+    return newHead to newTail
 }
 
 
