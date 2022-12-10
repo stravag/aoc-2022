@@ -1,5 +1,4 @@
 import org.junit.jupiter.api.Test
-import kotlin.math.abs
 import kotlin.test.assertEquals
 
 object Day09 : AbstractDay() {
@@ -66,20 +65,13 @@ object Day09 : AbstractDay() {
         }
 
         fun follow(other: Position) {
-            val xDiff = abs(other.x - x)
-            val yDiff = abs(other.y - y)
-            if (xDiff == 2 && yDiff > 0 || yDiff == 2 && xDiff > 0) {
-                adjustX(other)
-                adjustY(other)
-            } else if (xDiff == 2) {
-                adjustX(other)
-            } else if (yDiff == 2) {
-                adjustY(other)
+            val xDiff = other.x - x
+            val yDiff = other.y - y
+            if (xDiff * xDiff + yDiff * yDiff > 2) {
+                x += sign(xDiff)
+                y += sign(yDiff)
             }
         }
-
-        private fun adjustX(other: Position): Int = if (x < other.x) x++ else x--
-        private fun adjustY(other: Position): Int = if (y < other.y) y++ else y--
     }
 
     private fun String.parse(): List<String> {
