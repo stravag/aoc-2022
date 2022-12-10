@@ -2,7 +2,7 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 object Day10 : AbstractDay() {
-    
+
     @Test
     fun tests() {
         assertEquals(13140, compute1(testInput))
