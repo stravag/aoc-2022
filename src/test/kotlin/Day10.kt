@@ -10,7 +10,19 @@ object Day10 : AbstractDay() {
 
     @Test
     fun part2() {
-        compute(puzzleInput)
+        assertEquals(
+            """
+                ##..##..##..##..##..##..##..##..##..##..
+                ###...###...###...###...###...###...###.
+                ####....####....####....####....####....
+                #####.....#####.....#####.....#####.....
+                ######......######......######......####
+                #######.......#######.......#######.....
+            """.trimIndent(),
+            compute2(testInput).trimIndent()
+        )
+
+        println(compute2(puzzleInput))
     }
 
     private fun compute(input: List<String>): Int {
@@ -22,10 +34,21 @@ object Day10 : AbstractDay() {
         return cpu.currentSignal()
     }
 
+    private fun compute2(input: List<String>): String {
+        val output = StringBuilder()
+        val cpu = CPU(plotter = { output.append(it) })
+        input.forEach {
+            cpu.exec(it)
+        }
+
+        return output.toString()
+    }
+
     class CPU(
         private var register: Int = 1,
         private var cycleCnt: Int = 0,
         private var signal: Int = 0,
+        private val plotter: (Char) -> Unit = {}
     ) {
         fun exec(cmd: String) {
             val parts = cmd.split(" ")
@@ -58,16 +81,16 @@ object Day10 : AbstractDay() {
         private fun print() {
             val sprite = Sprite(register)
             val pixel = sprite.pixel(cycleCnt - 1)
-            print(pixel)
+            plotter(pixel)
             if (cycleCnt % 40 == 0) {
-                println()
+                plotter('\n')
             }
         }
 
         private data class Sprite(val sprite: List<Char>) {
             constructor(register: Int) : this(
                 List(40) {
-                    if (it in IntRange(register - 1, register + 1)) '#' else ' '
+                    if (it in IntRange(register - 1, register + 1)) '#' else '.'
                 }
             )
 
