@@ -28,7 +28,7 @@ object Day10 : AbstractDay() {
     private fun compute(input: List<String>): Int {
         val cpu = CPU()
         input.forEach {
-            cpu.exec(it)
+            cpu.exec(Instr.of(it))
         }
 
         return cpu.currentSignal()
@@ -38,10 +38,26 @@ object Day10 : AbstractDay() {
         val output = StringBuilder()
         val cpu = CPU(plotter = { output.append(it) })
         input.forEach {
-            cpu.exec(it)
+            cpu.exec(Instr.of(it))
         }
 
         return output.toString()
+    }
+
+    sealed interface Instr {
+        data class AddX(val i: Int) : Instr
+        object Noop : Instr
+
+        companion object {
+            fun of(cmd: String): Instr {
+                val parts = cmd.split(" ")
+                return when (parts.first()) {
+                    "noop" -> Noop
+                    "addx" -> AddX(parts[1].toInt())
+                    else -> throw IllegalArgumentException(cmd)
+                }
+            }
+        }
     }
 
     class CPU(
@@ -50,25 +66,18 @@ object Day10 : AbstractDay() {
         private var signal: Int = 0,
         private val plotter: (Char) -> Unit = {}
     ) {
-        fun exec(cmd: String) {
-            val parts = cmd.split(" ")
-            when (parts.first()) {
-                "noop" -> noop()
-                "addx" -> add(parts[1].toInt())
+        fun exec(cmd: Instr) {
+            when (cmd) {
+                Instr.Noop -> tick()
+                is Instr.AddX -> {
+                    tick()
+                    tick()
+                    register += cmd.i
+                }
             }
         }
 
         fun currentSignal(): Int = signal
-
-        private fun noop() {
-            tick()
-        }
-
-        private fun add(i: Int) {
-            tick()
-            tick()
-            register += i
-        }
 
         private fun tick() {
             cycleCnt++
