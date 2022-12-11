@@ -5,27 +5,51 @@ object Day11 : AbstractDay() {
 
     @Test
     fun part1() {
-        assertEquals(27, compute(testInput))
+        assertEquals(10605, compute(testInput))
+        assertEquals(54036, compute(puzzleInput))
     }
 
     private fun compute(input: List<String>): Int {
         val monkeys = input.filter { it.isNotBlank() }
             .chunked(6)
             .map { Monkey.of(it) }
-        return input.size
+
+        val monkeyLookup = monkeys.mapIndexed { index, monkey -> index to monkey }.toMap()
+
+        repeat(20) {
+            monkeys.forEach { monkey ->
+                monkey.items.forEach { item ->
+                    item.worryLevel = monkey.operation(item.worryLevel)
+                    monkey.inspections++
+                    item.worryLevel = item.worryLevel.floorDiv(3)
+                    if (item.worryLevel % monkey.divisor == 0) {
+                        monkeyLookup.getValue(monkey.trueMonkey).items.add(item)
+                    } else {
+                        monkeyLookup.getValue(monkey.falseMonkey).items.add(item)
+                    }
+                }
+                monkey.items.clear()
+            }
+        }
+
+        return monkeys
+            .map { it.inspections }
+            .sortedDescending()
+            .take(2)
+            .reduce(Int::times)
     }
 
     data class Item(
         var worryLevel: Int,
-        var throwCount: Int = 0,
     )
 
     class Monkey(
-        val items: List<Item>,
+        val items: MutableList<Item>,
         val operation: (Int) -> Int,
         val divisor: Int,
         val trueMonkey: Int,
-        val falseMonkey: Int
+        val falseMonkey: Int,
+        var inspections: Int = 0,
     ) {
 
         companion object {
@@ -34,7 +58,7 @@ object Day11 : AbstractDay() {
                 val operation = extractOperation(lines[2])
                 val divisor = extractDivisor(lines[3])
                 val (trueMonkey, falseMonkey) = extractTargetMonkeys(lines[4], lines[5])
-                return Monkey(items, operation, divisor, trueMonkey, falseMonkey)
+                return Monkey(items.toMutableList(), operation, divisor, trueMonkey, falseMonkey)
             }
 
             private fun extractItems(s: String): List<Item> {
