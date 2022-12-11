@@ -11,14 +11,17 @@ object Day11 : AbstractDay() {
     private fun compute(input: List<String>): Int {
         val monkeys = input.filter { it.isNotBlank() }
             .chunked(6)
-            .map {
-                Monkey.of(it)
-            }
+            .map { Monkey.of(it) }
         return input.size
     }
 
+    data class Item(
+        var worryLevel: Int,
+        var throwCount: Int = 0,
+    )
+
     class Monkey(
-        val items: List<Int>,
+        val items: List<Item>,
         val operation: (Int) -> Int,
         val divisor: Int,
         val trueMonkey: Int,
@@ -34,11 +37,12 @@ object Day11 : AbstractDay() {
                 return Monkey(items, operation, divisor, trueMonkey, falseMonkey)
             }
 
-            private fun extractItems(s: String): List<Int> {
+            private fun extractItems(s: String): List<Item> {
                 return s
                     .split(": ")[1]
                     .split(",")
                     .map { it.trim().toInt() }
+                    .map { Item(it) }
             }
 
             private fun extractOperation(s: String): (Int) -> Int {
