@@ -11,8 +11,11 @@ object Day11 : AbstractDay() {
 
     @Test
     fun part2() {
-        assertEquals(2713310158, compute2(testInput))
-        assertEquals(54036, compute1(puzzleInput))
+        assertEquals(24, compute2(testInput, 1)) // 4 * 6
+        assertEquals(10197, compute2(testInput, 20)) // 99 * 103
+        assertEquals(27019168, compute2(testInput, 1000)) // 5204 * 5192
+
+        assertEquals(2713310158, compute2(testInput, 10000))
     }
 
     private fun compute1(input: List<String>): Long {
@@ -41,9 +44,9 @@ object Day11 : AbstractDay() {
             .reduce(Long::times)
     }
 
-    private fun compute2(input: List<String>): Long {
+    private fun compute2(input: List<String>, rounds: Int): Long {
         val monkeys = parse(input)
-        repeat(1000) {
+        repeat(rounds) {
             monkeys.forEach { monkey ->
                 monkey.items.forEach { item ->
                     item.worryLevel = monkey.operation(item.worryLevel)
