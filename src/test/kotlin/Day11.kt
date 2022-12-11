@@ -5,11 +5,17 @@ object Day11 : AbstractDay() {
 
     @Test
     fun part1() {
-        assertEquals(10605, compute(testInput))
-        assertEquals(54036, compute(puzzleInput))
+        assertEquals(10605, compute1(testInput))
+        assertEquals(54036, compute1(puzzleInput))
     }
 
-    private fun compute(input: List<String>): Int {
+    @Test
+    fun part2() {
+        assertEquals(2713310158, compute2(testInput))
+        assertEquals(54036, compute1(puzzleInput))
+    }
+
+    private fun compute1(input: List<String>): Long {
         val monkeys = input.filter { it.isNotBlank() }
             .chunked(6)
             .map { Monkey.of(it) }
@@ -22,7 +28,7 @@ object Day11 : AbstractDay() {
                     item.worryLevel = monkey.operation(item.worryLevel)
                     monkey.inspections++
                     item.worryLevel = item.worryLevel.floorDiv(3)
-                    if (item.worryLevel % monkey.divisor == 0) {
+                    if (item.worryLevel % monkey.divisor == 0L) {
                         monkeyLookup.getValue(monkey.trueMonkey).items.add(item)
                     } else {
                         monkeyLookup.getValue(monkey.falseMonkey).items.add(item)
@@ -36,20 +42,49 @@ object Day11 : AbstractDay() {
             .map { it.inspections }
             .sortedDescending()
             .take(2)
-            .reduce(Int::times)
+            .reduce(Long::times)
+    }
+
+    private fun compute2(input: List<String>): Long {
+        val monkeys = input.filter { it.isNotBlank() }
+            .chunked(6)
+            .map { Monkey.of(it) }
+
+        val monkeyLookup = monkeys.mapIndexed { index, monkey -> index to monkey }.toMap()
+
+        repeat(20) {
+            monkeys.forEach { monkey ->
+                monkey.items.forEach { item ->
+                    item.worryLevel = monkey.operation(item.worryLevel)
+                    monkey.inspections++
+                    if (item.worryLevel % monkey.divisor == 0L) {
+                        monkeyLookup.getValue(monkey.trueMonkey).items.add(item)
+                    } else {
+                        monkeyLookup.getValue(monkey.falseMonkey).items.add(item)
+                    }
+                }
+                monkey.items.clear()
+            }
+        }
+
+        return monkeys
+            .map { it.inspections }
+            .sortedDescending()
+            .take(2)
+            .reduce(Long::times)
     }
 
     data class Item(
-        var worryLevel: Int,
+        var worryLevel: Long,
     )
 
     class Monkey(
         val items: MutableList<Item>,
-        val operation: (Int) -> Int,
-        val divisor: Int,
+        val operation: (Long) -> Long,
+        val divisor: Long,
         val trueMonkey: Int,
         val falseMonkey: Int,
-        var inspections: Int = 0,
+        var inspections: Long = 0,
     ) {
 
         companion object {
@@ -65,17 +100,17 @@ object Day11 : AbstractDay() {
                 return s
                     .split(": ")[1]
                     .split(",")
-                    .map { it.trim().toInt() }
+                    .map { it.trim().toLong() }
                     .map { Item(it) }
             }
 
-            private fun extractOperation(s: String): (Int) -> Int {
+            private fun extractOperation(s: String): (Long) -> Long {
                 val opStr = s.split(" = ")[1].split(" ")
-                val a = opStr[0].toIntOrNull()
-                val b = opStr[2].toIntOrNull()
-                val operation: (Int, Int) -> Int = when (opStr[1]) {
-                    "*" -> Int::times
-                    "+" -> Int::plus
+                val a = opStr[0].toLongOrNull()
+                val b = opStr[2].toLongOrNull()
+                val operation: (Long, Long) -> Long = when (opStr[1]) {
+                    "*" -> Long::times
+                    "+" -> Long::plus
                     else -> throw IllegalArgumentException()
                 }
                 return {
@@ -85,8 +120,8 @@ object Day11 : AbstractDay() {
                 }
             }
 
-            private fun extractDivisor(s: String): Int {
-                return s.split(" ").last().toInt()
+            private fun extractDivisor(s: String): Long {
+                return s.split(" ").last().toLong()
             }
 
             private fun extractTargetMonkeys(trueMonkey: String, falseMonkey: String): Pair<Int, Int> {
