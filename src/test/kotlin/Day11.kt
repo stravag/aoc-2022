@@ -9,7 +9,19 @@ object Day11 : AbstractDay() {
     }
 
     private fun compute(input: List<String>): Int {
+        val monkeys = input.filter { it.isNotBlank() }
+            .chunked(6)
+            .map {
+                Monkey.of(it)
+            }
         return input.size
     }
 
+    class Monkey {
+        companion object {
+            fun of(lines: List<String>): Monkey {
+                return Monkey()
+            }
+        }
+    }
 }
