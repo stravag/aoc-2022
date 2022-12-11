@@ -16,6 +16,7 @@ object Day11 : AbstractDay() {
         assertEquals(27019168, compute2(testInput, 1000)) // 5204 * 5192
 
         assertEquals(2713310158, compute2(testInput, 10000))
+        assertEquals(13237873355, compute2(puzzleInput, 10000))
     }
 
     private fun compute1(input: List<String>): Long {
@@ -37,19 +38,16 @@ object Day11 : AbstractDay() {
             }
         }
 
-        return monkeys
-            .map { it.inspections }
-            .sortedDescending()
-            .take(2)
-            .reduce(Long::times)
+        return monkeys.map { it.inspections }.sortedDescending().take(2).reduce(Long::times)
     }
 
     private fun compute2(input: List<String>, rounds: Int): Long {
         val monkeys = parse(input)
+        val lcm = monkeys.map { it.divisor }.fold(1L) { acc, i -> acc * i }
         repeat(rounds) {
             monkeys.forEach { monkey ->
                 monkey.items.forEach { item ->
-                    item.worryLevel = monkey.operation(item.worryLevel)
+                    item.worryLevel = monkey.operation(item.worryLevel) % lcm
                     monkey.inspections++
                     if (item.worryLevel % monkey.divisor == 0L) {
                         monkeys[monkey.trueMonkey].items.add(item)
@@ -61,17 +59,11 @@ object Day11 : AbstractDay() {
             }
         }
 
-        return monkeys
-            .map { it.inspections }
-            .sortedDescending()
-            .take(2)
-            .reduce(Long::times)
+        return monkeys.map { it.inspections }.sortedDescending().take(2).reduce(Long::times)
     }
 
     private fun parse(input: List<String>): List<Monkey> {
-        return input.filter { it.isNotBlank() }
-            .chunked(6)
-            .map { Monkey.of(it) }
+        return input.filter { it.isNotBlank() }.chunked(6).map { Monkey.of(it) }
     }
 
 
@@ -98,11 +90,7 @@ object Day11 : AbstractDay() {
             }
 
             private fun extractItems(s: String): List<Item> {
-                return s
-                    .split(": ")[1]
-                    .split(",")
-                    .map { it.trim().toLong() }
-                    .map { Item(it) }
+                return s.split(": ")[1].split(",").map { it.trim().toLong() }.map { Item(it) }
             }
 
             private fun extractOperation(s: String): (Long) -> Long {
