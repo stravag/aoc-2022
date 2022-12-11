@@ -5,50 +5,32 @@ object Day11 : AbstractDay() {
 
     @Test
     fun part1() {
-        assertEquals(10605, compute1(testInput))
-        assertEquals(54036, compute1(puzzleInput))
+        assertEquals(10605, part1(testInput))
+        assertEquals(54036, part1(puzzleInput))
     }
 
     @Test
     fun part2() {
-        assertEquals(24, compute2(testInput, 1)) // 4 * 6
-        assertEquals(10197, compute2(testInput, 20)) // 99 * 103
-        assertEquals(27019168, compute2(testInput, 1000)) // 5204 * 5192
-
-        assertEquals(2713310158, compute2(testInput, 10000))
-        assertEquals(13237873355, compute2(puzzleInput, 10000))
+        assertEquals(2713310158, part2(testInput))
+        assertEquals(13237873355, part2(puzzleInput))
     }
 
-    private fun compute1(input: List<String>): Long {
-        val monkeys = parse(input)
-
-        repeat(20) {
-            monkeys.forEach { monkey ->
-                monkey.items.forEach { item ->
-                    item.worryLevel = monkey.operation(item.worryLevel)
-                    monkey.inspections++
-                    item.worryLevel = item.worryLevel.floorDiv(3)
-                    if (item.worryLevel % monkey.divisor == 0L) {
-                        monkeys[monkey.trueMonkey].items.add(item)
-                    } else {
-                        monkeys[monkey.falseMonkey].items.add(item)
-                    }
-                }
-                monkey.items.clear()
-            }
-        }
-
-        return monkeys.map { it.inspections }.sortedDescending().take(2).reduce(Long::times)
+    private fun part1(input: List<String>): Long {
+        return compute(parse(input), 20) { it.floorDiv(3) }
     }
 
-    private fun compute2(input: List<String>, rounds: Int): Long {
+    private fun part2(input: List<String>): Long {
         val monkeys = parse(input)
         val lcm = monkeys.map { it.divisor }.fold(1L) { acc, i -> acc * i }
+        return compute(parse(input), 10000) { it % lcm }
+    }
+
+    private fun compute(monkeys: List<Monkey>, rounds: Int, adjustment: Adjustment): Long {
         repeat(rounds) {
             monkeys.forEach { monkey ->
                 monkey.items.forEach { item ->
-                    item.worryLevel = monkey.operation(item.worryLevel) % lcm
                     monkey.inspections++
+                    item.worryLevel = adjustment(monkey.operation(item.worryLevel))
                     if (item.worryLevel % monkey.divisor == 0L) {
                         monkeys[monkey.trueMonkey].items.add(item)
                     } else {
@@ -66,7 +48,6 @@ object Day11 : AbstractDay() {
         return input.filter { it.isNotBlank() }.chunked(6).map { Monkey.of(it) }
     }
 
-
     data class Item(
         var worryLevel: Long,
     )
@@ -79,7 +60,6 @@ object Day11 : AbstractDay() {
         val falseMonkey: Int,
         var inspections: Long = 0,
     ) {
-
         companion object {
             fun of(lines: List<String>): Monkey {
                 val items = extractItems(lines[1])
@@ -122,3 +102,5 @@ object Day11 : AbstractDay() {
         }
     }
 }
+
+private typealias Adjustment = (Long) -> Long
