@@ -16,11 +16,7 @@ object Day11 : AbstractDay() {
     }
 
     private fun compute1(input: List<String>): Long {
-        val monkeys = input.filter { it.isNotBlank() }
-            .chunked(6)
-            .map { Monkey.of(it) }
-
-        val monkeyLookup = monkeys.mapIndexed { index, monkey -> index to monkey }.toMap()
+        val monkeys = parse(input)
 
         repeat(20) {
             monkeys.forEach { monkey ->
@@ -29,9 +25,9 @@ object Day11 : AbstractDay() {
                     monkey.inspections++
                     item.worryLevel = item.worryLevel.floorDiv(3)
                     if (item.worryLevel % monkey.divisor == 0L) {
-                        monkeyLookup.getValue(monkey.trueMonkey).items.add(item)
+                        monkeys[monkey.trueMonkey].items.add(item)
                     } else {
-                        monkeyLookup.getValue(monkey.falseMonkey).items.add(item)
+                        monkeys[monkey.falseMonkey].items.add(item)
                     }
                 }
                 monkey.items.clear()
@@ -46,21 +42,16 @@ object Day11 : AbstractDay() {
     }
 
     private fun compute2(input: List<String>): Long {
-        val monkeys = input.filter { it.isNotBlank() }
-            .chunked(6)
-            .map { Monkey.of(it) }
-
-        val monkeyLookup = monkeys.mapIndexed { index, monkey -> index to monkey }.toMap()
-
-        repeat(20) {
+        val monkeys = parse(input)
+        repeat(1000) {
             monkeys.forEach { monkey ->
                 monkey.items.forEach { item ->
                     item.worryLevel = monkey.operation(item.worryLevel)
                     monkey.inspections++
                     if (item.worryLevel % monkey.divisor == 0L) {
-                        monkeyLookup.getValue(monkey.trueMonkey).items.add(item)
+                        monkeys[monkey.trueMonkey].items.add(item)
                     } else {
-                        monkeyLookup.getValue(monkey.falseMonkey).items.add(item)
+                        monkeys[monkey.falseMonkey].items.add(item)
                     }
                 }
                 monkey.items.clear()
@@ -73,6 +64,13 @@ object Day11 : AbstractDay() {
             .take(2)
             .reduce(Long::times)
     }
+
+    private fun parse(input: List<String>): List<Monkey> {
+        return input.filter { it.isNotBlank() }
+            .chunked(6)
+            .map { Monkey.of(it) }
+    }
+
 
     data class Item(
         var worryLevel: Long,
