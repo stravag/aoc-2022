@@ -5,8 +5,8 @@ object Day12 : AbstractDay() {
 
     @Test
     fun part1() {
-        assertEquals(31, compute1(testInput, Coordinates(0, 0)))
-        assertEquals(437, compute1(puzzleInput, Coordinates(20, 0)))
+        assertEquals(31, compute1(testInput))
+        assertEquals(437, compute1(puzzleInput))
     }
 
     @Test
@@ -15,27 +15,26 @@ object Day12 : AbstractDay() {
         assertEquals(430, compute2(puzzleInput))
     }
 
-    private fun compute1(input: List<String>, startPos: Coordinates): Int {
-        val relief = input.mapIndexed { rowIdx, line ->
-            line.mapIndexed { colIdx, point ->
-                val height = point.height()
-                val coordinates = Coordinates(rowIdx, colIdx)
-                val adjacentCoordinates = coordinates.getAdjacentCoordinates()
-                val accessibleNeighbors = adjacentCoordinates
-                    .mapNotNull { c -> input.get(c)?.let { c to it.height() } }
-                    .map { (c, adjacentHeight) -> c to (adjacentHeight - height) }
-                    .filter { (_, adjacentHeightDiff) -> adjacentHeightDiff <= 1 }
-                    .map { it.first }
+    private fun compute1(input: List<String>): Int {
+        val relief = buildRelief(input)
+        val startNode = relief.flatten().single { it.isStart }
 
-                Node(point, coordinates, accessibleNeighbors)
-            }
-        }
-        return findShortestPaths(relief, relief.get(startPos))
-            .singleOrNull { it.isEnd }?.distance ?: Int.MAX_VALUE
+        return findShortestPaths(relief, startNode)
+            .single { it.isEnd }.distance
     }
 
     private fun compute2(input: List<String>): Int {
-        val relief = input.mapIndexed { rowIdx, line ->
+        val relief = buildRelief(input)
+        val lowNodes = relief.flatten().filter { it.isLow }
+        return lowNodes
+            .flatMap { findShortestPaths(relief, it) }
+            .filter { it.isEnd }
+            .minBy { it.distance }
+            .distance
+    }
+
+    private fun buildRelief(input: List<String>): List<List<Node>> {
+        return input.mapIndexed { rowIdx, line ->
             line.mapIndexed { colIdx, point ->
                 val height = point.height()
                 val coordinates = Coordinates(rowIdx, colIdx)
@@ -49,11 +48,6 @@ object Day12 : AbstractDay() {
                 Node(point, coordinates, accessibleNeighbors)
             }
         }
-
-        val candidates = relief.flatten()
-            .filter { it.isLow }
-
-        return candidates.minOfOrNull { compute1(input, it.coordinates) } ?: Int.MAX_VALUE
     }
 
     private fun List<String>.get(coordinates: Coordinates): Char? {
@@ -105,6 +99,7 @@ object Day12 : AbstractDay() {
         val accessibleNeighbors: List<Coordinates>,
         var distance: Int = Int.MAX_VALUE,
     ) {
+        val isStart get() = point == 'S'
         val isEnd get() = point == 'E'
         val isLow get() = point.height() == 'a'.height()
     }
