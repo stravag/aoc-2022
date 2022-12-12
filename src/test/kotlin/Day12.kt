@@ -16,7 +16,7 @@ object Day12 : AbstractDay() {
     }
 
     private fun compute1(input: List<String>): Int {
-        val relief = buildRelief(input)
+        val relief = buildRelief(input) { diff -> diff <= 1 }
         val startNode = relief.flatten().single { it.isStart }
 
         return findShortestPaths(relief, startNode)
@@ -24,16 +24,14 @@ object Day12 : AbstractDay() {
     }
 
     private fun compute2(input: List<String>): Int {
-        val relief = buildRelief(input)
-        val lowNodes = relief.flatten().filter { it.isLow }
-        return lowNodes
-            .flatMap { findShortestPaths(relief, it) }
-            .filter { it.isEnd }
-            .minBy { it.distance }
-            .distance
+        val relief = buildRelief(input) { diff -> diff >= -1 }
+        val endNode = relief.flatten().single { it.isEnd }
+        return findShortestPaths(relief, endNode)
+            .filter { it.isLow }
+            .minOf { it.distance }
     }
 
-    private fun buildRelief(input: List<String>): List<List<Node>> {
+    private fun buildRelief(input: List<String>, neighborAccessible: (Int) -> Boolean): List<List<Node>> {
         return input.mapIndexed { rowIdx, line ->
             line.mapIndexed { colIdx, point ->
                 val height = point.height()
@@ -42,7 +40,7 @@ object Day12 : AbstractDay() {
                 val accessibleNeighbors = adjacentCoordinates
                     .mapNotNull { c -> input.get(c)?.let { c to it.height() } }
                     .map { (c, adjacentHeight) -> c to (adjacentHeight - height) }
-                    .filter { (_, adjacentHeightDiff) -> adjacentHeightDiff <= 1 }
+                    .filter { (_, adjacentHeightDiff) -> neighborAccessible(adjacentHeightDiff) }
                     .map { it.first }
 
                 Node(point, coordinates, accessibleNeighbors)
