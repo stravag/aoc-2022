@@ -5,18 +5,32 @@ object Day12 : AbstractDay() {
 
     @Test
     fun part1() {
-        assertEquals(31, compute(testInput, Coordinates(0, 0)))
-        assertEquals(0, compute(puzzleInput, Coordinates(20, 0)))
+        assertEquals(31, compute1(testInput, Coordinates(0, 0)))
+        assertEquals(437, compute1(puzzleInput, Coordinates(20, 0)))
     }
 
     @Test
     fun part2() {
-        //assertEquals(0, compute(testInput, Coordinates(0, 0)))
-        //assertEquals(0, compute(puzzleInput, Coordinates(20, 0)))
+        assertEquals(0, compute2(testInput, Coordinates(2, 5)))
+        assertEquals(0, compute2(puzzleInput, Coordinates(20, 137)))
     }
 
-    private fun compute(input: List<String>, startPos: Coordinates): Int {
-        val relief = input.mapIndexed { rowIdx, line ->
+    private fun compute1(input: List<String>, startPos: Coordinates): Int {
+        val relief = reliefOf(input)
+        return findShortestPaths(relief, relief.get(startPos))
+            .single { it.isEnd }.distance
+    }
+
+    private fun compute2(input: List<String>, startPos: Coordinates): Int {
+        val relief = reliefOf(input)
+        return findShortestPaths(relief, relief.get(startPos))
+            .filter { it.isLow }
+            .minBy { it.distance }
+            .distance
+    }
+
+    private fun reliefOf(input: List<String>): List<List<Node>> {
+        return input.mapIndexed { rowIdx, line ->
             line.mapIndexed { colIdx, point ->
                 val height = point.height()
                 val coordinates = Coordinates(rowIdx, colIdx)
@@ -30,8 +44,6 @@ object Day12 : AbstractDay() {
                 Node(point, coordinates, accessibleNeighbors)
             }
         }
-
-        return findShortestPath(relief, relief.get(startPos))
     }
 
     private fun List<String>.get(coordinates: Coordinates): Char? {
@@ -42,7 +54,7 @@ object Day12 : AbstractDay() {
         return this[coordinates.rowIdx][coordinates.colIdx]
     }
 
-    private fun findShortestPath(relief: List<List<Node>>, startNode: Node): Int {
+    private fun findShortestPaths(relief: List<List<Node>>, startNode: Node): Set<Node> {
         startNode.distance = 0
         val unsettled = mutableSetOf(startNode)
         val settled = mutableSetOf<Node>()
@@ -61,7 +73,7 @@ object Day12 : AbstractDay() {
             }
             settled.add(currentNode)
         }
-        return settled.single { it.isEnd }.distance
+        return settled
     }
 
     private fun Char.height() = (if (this == 'S') 'a' else if (this == 'E') 'z' else this).code
@@ -84,5 +96,6 @@ object Day12 : AbstractDay() {
         var distance: Int = Int.MAX_VALUE,
     ) {
         val isEnd get() = point == 'E'
+        val isLow get() = point.height() == 'a'.height()
     }
 }
