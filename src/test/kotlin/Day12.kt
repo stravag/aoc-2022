@@ -11,26 +11,12 @@ object Day12 : AbstractDay() {
 
     @Test
     fun part2() {
-        assertEquals(0, compute2(testInput, Coordinates(2, 5)))
-        assertEquals(0, compute2(puzzleInput, Coordinates(20, 137)))
+        assertEquals(29, compute2(testInput))
+        assertEquals(430, compute2(puzzleInput))
     }
 
     private fun compute1(input: List<String>, startPos: Coordinates): Int {
-        val relief = reliefOf(input)
-        return findShortestPaths(relief, relief.get(startPos))
-            .single { it.isEnd }.distance
-    }
-
-    private fun compute2(input: List<String>, startPos: Coordinates): Int {
-        val relief = reliefOf(input)
-        return findShortestPaths(relief, relief.get(startPos))
-            .filter { it.isLow }
-            .minBy { it.distance }
-            .distance
-    }
-
-    private fun reliefOf(input: List<String>): List<List<Node>> {
-        return input.mapIndexed { rowIdx, line ->
+        val relief = input.mapIndexed { rowIdx, line ->
             line.mapIndexed { colIdx, point ->
                 val height = point.height()
                 val coordinates = Coordinates(rowIdx, colIdx)
@@ -44,6 +30,30 @@ object Day12 : AbstractDay() {
                 Node(point, coordinates, accessibleNeighbors)
             }
         }
+        return findShortestPaths(relief, relief.get(startPos))
+            .singleOrNull { it.isEnd }?.distance ?: Int.MAX_VALUE
+    }
+
+    private fun compute2(input: List<String>): Int {
+        val relief = input.mapIndexed { rowIdx, line ->
+            line.mapIndexed { colIdx, point ->
+                val height = point.height()
+                val coordinates = Coordinates(rowIdx, colIdx)
+                val adjacentCoordinates = coordinates.getAdjacentCoordinates()
+                val accessibleNeighbors = adjacentCoordinates
+                    .mapNotNull { c -> input.get(c)?.let { c to it.height() } }
+                    .map { (c, adjacentHeight) -> c to (adjacentHeight - height) }
+                    .filter { (_, adjacentHeightDiff) -> adjacentHeightDiff <= 1 }
+                    .map { it.first }
+
+                Node(point, coordinates, accessibleNeighbors)
+            }
+        }
+
+        val candidates = relief.flatten()
+            .filter { it.isLow }
+
+        return candidates.minOfOrNull { compute1(input, it.coordinates) } ?: Int.MAX_VALUE
     }
 
     private fun List<String>.get(coordinates: Coordinates): Char? {
