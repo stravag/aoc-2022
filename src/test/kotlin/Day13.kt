@@ -17,15 +17,9 @@ object Day13 : AbstractDay() {
     }
 
     private fun compute1(input: List<String>): Int {
-
-        return input
-            .filter { line -> line.isNotEmpty() }
-            .chunked(2) { lines ->
-                val (left, right) = lines.map { parse(it) }
-                left <= right
-            }.mapIndexed { index, right ->
-                index + 1 to right
-            }
+        return parse(input)
+            .chunked(2) { (l, r) -> l <= r }
+            .mapIndexed { idx, right -> idx + 1 to right }
             .filter { it.second } // filter pairs in right order
             .sumOf { it.first }
     }
@@ -33,13 +27,8 @@ object Day13 : AbstractDay() {
     private fun compute2(input: List<String>): Int {
         val divider1 = parse("[[2]]")
         val divider2 = parse("[[6]]")
-
-        val inputPackets: List<ListPacket> = input
-            .filter { it.isNotEmpty() }
-            .map { parse(it) }
-
         val dividerIdx = listOf(divider1, divider2)
-            .plus(inputPackets)
+            .plus(parse(input))
             .sorted()
             .mapIndexedNotNull { index, listPacket ->
                 if (listPacket == divider1 || listPacket == divider2) {
@@ -52,6 +41,9 @@ object Day13 : AbstractDay() {
         return dividerIdx[0] * dividerIdx[1]
     }
 
+    private fun parse(lines: List<String>): List<ListPacket> {
+        return lines.filter { it.isNotEmpty() }.map { parse(it) }
+    }
 
     private fun parse(line: String): ListPacket {
         fun gatherPackets(line: String, idxOffset: Int, enclosing: ListPacket): Int {
@@ -90,25 +82,25 @@ object Day13 : AbstractDay() {
 
     sealed interface Packet
 
-    data class IntPacket(val int: Int) : Packet, Comparable<IntPacket> {
+    data class IntPacket(private val int: Int) : Packet, Comparable<IntPacket> {
         override fun compareTo(other: IntPacket): Int {
             return int.compareTo(other.int)
         }
     }
 
     data class ListPacket(
-        val list: MutableList<Packet> = mutableListOf()
-    ) : List<Packet> by list, Packet, Comparable<ListPacket> {
+        private val list: MutableList<Packet> = mutableListOf()
+    ) : Packet, Comparable<ListPacket> {
 
         constructor(p: IntPacket) : this(mutableListOf(p))
 
         fun add(p: Packet) = list.add(p)
 
         override fun compareTo(other: ListPacket): Int {
-            val s = min(size, other.size)
+            val s = min(list.size, other.list.size)
             for (i in 0 until s) {
-                val left = this[i]
-                val right = other[i]
+                val left = this.list[i]
+                val right = other.list[i]
                 if (left is IntPacket && right is IntPacket) {
                     if (left != right) {
                         return left.compareTo(right)
@@ -121,7 +113,7 @@ object Day13 : AbstractDay() {
                     }
                 }
             }
-            return size - other.size
+            return list.size - other.list.size
         }
     }
 
