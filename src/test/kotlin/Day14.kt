@@ -81,11 +81,11 @@ object Day14 : AbstractDay() {
 
         private fun fall(sand: V) {
             if (sand.y > maxY) return
-            if (!hitStuff(sand.down())) {
+            if (canFall(sand.down())) {
                 fall(sand.down())
-            } else if (!hitStuff(sand.left())) {
+            } else if (canFall(sand.left())) {
                 fall(sand.left())
-            } else if (!hitStuff(sand.right())) {
+            } else if (canFall(sand.right())) {
                 fall(sand.right())
             } else {
                 // settled
@@ -96,11 +96,11 @@ object Day14 : AbstractDay() {
 
         private fun fallToFloor(sand: V) {
             if (settledSand.contains(V(500, 0))) return
-            if (!hitStuffOrFloor(sand.down())) {
+            if (canFallToFloor(sand.down())) {
                 fallToFloor(sand.down())
-            } else if (!hitStuffOrFloor(sand.left())) {
+            } else if (canFallToFloor(sand.left())) {
                 fallToFloor(sand.left())
-            } else if (!hitStuffOrFloor(sand.right())) {
+            } else if (canFallToFloor(sand.right())) {
                 fallToFloor(sand.right())
             } else {
                 // settled
@@ -109,12 +109,12 @@ object Day14 : AbstractDay() {
             }
         }
 
-        private fun hitStuff(sand: V): Boolean {
-            return rocks.contains(sand) || settledSand.contains(sand)
+        private fun canFall(sand: V): Boolean {
+            return !rocks.contains(sand) && !settledSand.contains(sand)
         }
 
-        private fun hitStuffOrFloor(sand: V): Boolean {
-            return hitStuff(sand) || sand.y == maxY + 2
+        private fun canFallToFloor(sand: V): Boolean {
+            return !rocks.contains(sand) && !settledSand.contains(sand) && sand.y < maxY + 2
         }
     }
 
