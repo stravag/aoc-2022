@@ -1,5 +1,5 @@
 import org.junit.jupiter.api.Test
-import kotlin.math.max
+import kotlin.math.min
 import kotlin.test.assertEquals
 
 object Day13 : AbstractDay() {
@@ -7,58 +7,40 @@ object Day13 : AbstractDay() {
     @Test
     fun part1() {
         assertEquals(13, compute1(testInput))
-        //assertEquals(0, compute1(puzzleInput))
+        assertEquals(5806, compute1(puzzleInput))
     }
 
     @Test
     fun part2() {
-        assertEquals(23, compute2(testInput))
-        assertEquals(449, compute2(puzzleInput))
-    }
-
-    @Test
-    fun testCompare() {
-        assertEquals(
-            0, compute1(
-                listOf(
-                    "[7,7,7,7]",
-                    "[7,7,7]",
-                )
-            )
-        )
-
-        assertEquals(
-            0, compute1(
-                listOf(
-                    "[9]",
-                    "[[8,7,6]]",
-                )
-            )
-        )
+        //assertEquals(23, compute2(testInput))
+        //assertEquals(449, compute2(puzzleInput))
     }
 
     private fun compute1(input: List<String>): Int {
-        val debugVar = input
+
+        return input
             .filter { line -> line.isNotEmpty() }
             .chunked(2) { lines ->
                 val (left, right) = lines.map { parse(it) }
-                left <= right
-            }.mapIndexed { index, right -> index + 1 to right }
-
-        return debugVar
+                lines to (left <= right)
+            }.mapIndexed { index, (lines, right) ->
+                if (listOf(5, 118, 121).contains(index + 1)) {
+                    lines.forEach { println(it) }
+                }
+                index + 1 to right
+            }
             .filter { it.second } // filter pairs in right order
             .sumOf { it.first }
     }
 
-    private fun parse(line: String): Packet {
-        fun gatherPackets(line: String, idxOffset: Int, parentPacket: Packet): Int {
+    private fun parse(line: String): ListPacket {
+        fun gatherPackets(line: String, idxOffset: Int, enclosing: ListPacket): Int {
             var idx = idxOffset
             while (idx <= line.length) {
-                val c = line[idx]
-                when (c) {
+                when (line[idx]) {
                     '[' -> {
-                        val packet = Packet()
-                        parentPacket.add(packet)
+                        val packet = ListPacket()
+                        enclosing.add(packet)
                         idx = gatherPackets(line, idx + 1, packet)
                     }
 
@@ -73,61 +55,53 @@ object Day13 : AbstractDay() {
                     else -> {
                         val numStr = line.substring(idx)
                             .takeWhile { it.isDigit() }
-                        parentPacket.add(numStr.toInt())
-                        idx++
+                        enclosing.add(IntPacket(numStr.toInt()))
+                        idx += numStr.length
                     }
                 }
             }
             return idx + 1
         }
 
-        val packet = Packet()
+        val packet = ListPacket()
         gatherPackets(line, 1, packet)
         return packet
     }
 
-    data class Packet(
-        val int: Int? = null,
-        val packets: MutableList<Packet> = mutableListOf()
-    ) : Comparable<Packet> {
-        fun add(i: Int) {
-            packets.add(Packet(i))
+    sealed interface Packet
+
+    data class IntPacket(val int: Int) : Packet, Comparable<IntPacket> {
+        override fun compareTo(other: IntPacket): Int {
+            return int.compareTo(other.int)
         }
+    }
 
-        fun add(p: Packet) {
-            packets.add(p)
-        }
+    data class ListPacket(
+        val list: MutableList<Packet> = mutableListOf()
+    ) : List<Packet> by list, Packet, Comparable<ListPacket> {
 
-        private fun getOrNull(idx: Int) = packets.getOrNull(idx)
+        constructor(p: IntPacket) : this(mutableListOf(p))
 
-        private fun isNumber(): Boolean = int != null
-        private fun size(): Int = packets.size
+        fun add(p: Packet) = list.add(p)
 
-        override fun compareTo(other: Packet): Int {
-            val size = max(this.size(), other.size())
-            for (i in 0 until size) {
-                val nextLeft = this.getOrNull(i)
-                val nextRight = other.getOrNull(i)
-                val c = if (nextLeft != null && nextRight != null) {
-                    if (nextLeft.isNumber() && nextRight.isNumber()) {
-                        nextLeft.int!!.compareTo(nextRight.int!!)
-                    } else {
-                        val l = if (nextLeft.isNumber()) p(nextLeft) else nextLeft
-                        val r = if (nextRight.isNumber()) p(nextRight) else nextRight
-                        l.compareTo(r)
+        override fun compareTo(other: ListPacket): Int {
+            val s = min(size, other.size)
+            for (i in 0 until s) {
+                val left = this[i]
+                val right = other[i]
+                if (left is IntPacket && right is IntPacket) {
+                    if (left != right) {
+                        return left.compareTo(right)
                     }
-                } else if (nextLeft == null) {
-                    return -1 // left ran out of items
                 } else {
-                    return 1 // right ran out of items
+                    val l = if (left is IntPacket) ListPacket(left) else left as ListPacket
+                    val r = if (right is IntPacket) ListPacket(right) else right as ListPacket
+                    if (l != r) {
+                        return l.compareTo(r)
+                    }
                 }
-                if (c != 0) return c // continue only if same
             }
-            return -1 // if we made it this far it's fine
-        }
-
-        companion object {
-            fun p(p: Packet) = Packet(null, mutableListOf(p))
+            return size - other.size
         }
     }
 
