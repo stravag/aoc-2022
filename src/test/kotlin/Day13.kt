@@ -6,7 +6,7 @@ object Day13 : AbstractDay() {
 
     @Test
     fun part1() {
-        assertEquals(0, compute1(testInput))
+        assertEquals(13, compute1(testInput))
         assertEquals(0, compute1(puzzleInput))
     }
 
@@ -18,16 +18,18 @@ object Day13 : AbstractDay() {
 
     @Test
     fun testCompare() {
-        compute1(listOf("[[1],[2]]"))
+        assertEquals(1, compute1(listOf("[[1],[2]]")))
     }
 
     private fun compute1(input: List<String>): Int {
-        input
+        return input
             .filter { line -> line.isNotEmpty() }
             .chunked(2) { lines ->
                 val (left, right) = lines.map { parse(it) }
-
-            }
+                left <= right
+            }.mapIndexed { index, right -> index + 1 to right }
+            .filter { it.second }
+            .sumOf { it.first }
     }
 
     private fun parse(line: String): Packet {
@@ -84,13 +86,26 @@ object Day13 : AbstractDay() {
             for (i in 0 until size) {
                 val left = this.packets.getOrNull(i) ?: this.int
                 val right = other.packets.getOrNull(i) ?: other.int
+                if (left != null && right != null) {
+                    val c = if (left is Int && right is Int) {
+                        left.compareTo(right)
+                    } else if (left is Packet && right is Packet) {
+                        left.compareTo(right)
+                    } else {
+                        val l = if (left is Int) Packet(left) else left as Packet
+                        val r = if (right is Int) Packet(right) else right as Packet
+                        l.compareTo(r)
+                    }
+                    if (c != 0) return c
+                }
                 if (left == null && right != null) {
                     return -1 // left ran out of items
                 }
-                if (left != null && right != null) {
-                    if (left is )
+                if (left != null && right == null) {
+                    return 1 // right ran out of items
                 }
             }
+            return -1 // if we made it this far it's fine
         }
     }
 
