@@ -1,4 +1,6 @@
 import org.junit.jupiter.api.Test
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.test.assertEquals
 
 object Day14 : AbstractDay() {
@@ -6,7 +8,7 @@ object Day14 : AbstractDay() {
     @Test
     fun part1() {
         assertEquals(2, compute1(testInput))
-        assertEquals(147, compute1(puzzleInput))
+        //assertEquals(147, compute1(puzzleInput))
     }
 
     @Test
@@ -25,7 +27,7 @@ object Day14 : AbstractDay() {
             }.flatten()
         }
 
-        Mountain(rocks.toSet())
+        val mountain = Mountain(rocks)
         val sandStart = V(500, 0)
         return input.size
     }
@@ -34,21 +36,35 @@ object Day14 : AbstractDay() {
         return input.size
     }
 
-    private data class Mountain(val rocks: Set<V>) {
+    private data class Mountain(val rocks: MutableSet<V>) {
+        constructor(rocks: List<V>) : this(rocks.toMutableSet())
 
+        fun addSand(sand: V) {
+
+        }
+
+        fun hitsRock(sand: V): Boolean {
+            return rocks.contains(sand.afterFall())
+        }
     }
 
-    fun getRocks(start: V, end: V): List<V> {
+    private fun getRocks(start: V, end: V): Set<V> {
         // fix range
-        val xRocks = if (start.x != end.x) (start.x..end.x).map { V(it, start.y) } else emptyList()
-        val yRocks = if (start.y != end.y) (start.y..end.y).map { V(start.x, it) } else emptyList()
-        return xRocks + yRocks
+        val xRocks = (min(start.x, end.x)..max(start.x, end.x)).map { V(it, start.y) }
+        val yRocks = (min(start.y, end.y)..max(start.y, end.y)).map { V(start.x, it) }
+        return (xRocks + yRocks).toSet()
     }
 
-    data class V(val x: Int, val y: Int) {
+    data class V(var x: Int, var y: Int) {
+        fun afterFall(): V {
+            return copy(y = y + 1)
+        }
+
+        fun fall() {
+            y++
+        }
+
         companion object {
-
-
             fun of(strings: List<String>): List<V> = strings.map { of(it) }
             private fun of(string: String): V {
                 val (x, y) = string.split(",").map { it.toInt() }
