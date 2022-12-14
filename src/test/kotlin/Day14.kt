@@ -7,8 +7,8 @@ object Day14 : AbstractDay() {
 
     @Test
     fun part1() {
-        assertEquals(2, compute1(testInput))
-        //assertEquals(147, compute1(puzzleInput))
+        assertEquals(24, compute1(testInput))
+        assertEquals(901, compute1(puzzleInput))
     }
 
     @Test
@@ -28,23 +28,65 @@ object Day14 : AbstractDay() {
         }
 
         val mountain = Mountain(rocks)
-        val sandStart = V(500, 0)
-        return input.size
+        while(true) {
+            val before = mountain.sandCount
+            mountain.addSand(V(500, 0))
+            val after = mountain.sandCount
+            if (before == after) {
+                return after
+            }
+        }
     }
 
     private fun compute2(input: List<String>): Int {
         return input.size
     }
 
-    private data class Mountain(val rocks: MutableSet<V>) {
-        constructor(rocks: List<V>) : this(rocks.toMutableSet())
+    private data class Mountain(
+        val rocks: Set<V>,
+        private val settledSand: MutableList<V>,
+        private val maxY: Int
+    ) {
+        constructor(rocks: List<V>) : this(rocks.toSet(), mutableListOf(), rocks.maxOf { it.y })
 
-        fun addSand(sand: V) {
-
+        fun print() {
+            for (y in 0..9) {
+                for (x in 494..503) {
+                    val v = V(x, y)
+                    if (rocks.contains(v)) print('#')
+                    else if (settledSand.contains(v)) print('o')
+                    else print('.')
+                }
+                println()
+            }
         }
 
-        fun hitsRock(sand: V): Boolean {
-            return rocks.contains(sand.afterFall())
+        val sandCount get() = settledSand.size
+
+        fun addSand(sand: V) {
+            fall(sand)
+        }
+
+        private fun fall(sand: V) {
+            if (sand.y > maxY) return
+            if (!hitStuff(sand.afterFall())) {
+                sand.dropDown()
+                fall(sand)
+            } else if (!hitStuff(sand.afterLeft())) {
+                sand.dropLeft()
+                fall(sand)
+            } else if (!hitStuff(sand.afterRight())) {
+                sand.dropRight()
+                fall(sand)
+            } else {
+                // settled
+                settledSand.add(sand)
+                return
+            }
+        }
+
+        private fun hitStuff(sand: V): Boolean {
+            return (rocks + settledSand).contains(sand)
         }
     }
 
@@ -60,7 +102,25 @@ object Day14 : AbstractDay() {
             return copy(y = y + 1)
         }
 
-        fun fall() {
+        fun afterLeft(): V {
+            return copy(x = x - 1, y = y + 1)
+        }
+
+        fun afterRight(): V {
+            return copy(x = x + 1, y = y + 1)
+        }
+
+        fun dropDown() {
+            y++
+        }
+
+        fun dropLeft() {
+            x--
+            y++
+        }
+
+        fun dropRight() {
+            x++
             y++
         }
 
