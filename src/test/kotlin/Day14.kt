@@ -33,6 +33,7 @@ object Day14 : AbstractDay() {
             mountain.addSand(V(500, 0))
             val after = mountain.sandCount
             if (before == after) {
+                mountain.print()
                 return after
             }
         }
@@ -45,6 +46,7 @@ object Day14 : AbstractDay() {
             mountain.addSandToFloor(V(500, 0))
             val after = mountain.sandCount
             if (before == after) {
+                mountain.print()
                 return after
             }
         }
@@ -70,6 +72,22 @@ object Day14 : AbstractDay() {
         constructor(rocks: List<V>) : this(rocks.toSet(), mutableSetOf(), rocks.maxOf { it.y })
 
         val sandCount get() = settledSand.size
+
+        fun print() {
+            val minY = (rocks + settledSand).minOf { it.y }
+            val maxY = (rocks + settledSand).maxOf { it.y }
+            val minX = (rocks + settledSand).minOf { it.x }
+            val maxX = (rocks + settledSand).maxOf { it.x }
+            for (y in minY..maxY) {
+                for (x in minX..maxX) {
+                    val v = V(x, y)
+                    if (rocks.contains(v)) print('#')
+                    else if (settledSand.contains(v)) print('o')
+                    else print('.')
+                }
+                println()
+            }
+        }
 
         fun addSand(sand: V) {
             fall(
