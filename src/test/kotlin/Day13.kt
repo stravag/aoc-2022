@@ -12,8 +12,8 @@ object Day13 : AbstractDay() {
 
     @Test
     fun part2() {
-        //assertEquals(23, compute2(testInput))
-        //assertEquals(449, compute2(puzzleInput))
+        assertEquals(140, compute2(testInput))
+        assertEquals(23600, compute2(puzzleInput))
     }
 
     private fun compute1(input: List<String>): Int {
@@ -22,16 +22,36 @@ object Day13 : AbstractDay() {
             .filter { line -> line.isNotEmpty() }
             .chunked(2) { lines ->
                 val (left, right) = lines.map { parse(it) }
-                lines to (left <= right)
-            }.mapIndexed { index, (lines, right) ->
-                if (listOf(5, 118, 121).contains(index + 1)) {
-                    lines.forEach { println(it) }
-                }
+                left <= right
+            }.mapIndexed { index, right ->
                 index + 1 to right
             }
             .filter { it.second } // filter pairs in right order
             .sumOf { it.first }
     }
+
+    private fun compute2(input: List<String>): Int {
+        val divider1 = parse("[[2]]")
+        val divider2 = parse("[[6]]")
+
+        val inputPackets: List<ListPacket> = input
+            .filter { it.isNotEmpty() }
+            .map { parse(it) }
+
+        val dividerIdx = listOf(divider1, divider2)
+            .plus(inputPackets)
+            .sorted()
+            .mapIndexedNotNull { index, listPacket ->
+                if (listPacket == divider1 || listPacket == divider2) {
+                    index + 1
+                } else {
+                    null
+                }
+            }
+
+        return dividerIdx[0] * dividerIdx[1]
+    }
+
 
     private fun parse(line: String): ListPacket {
         fun gatherPackets(line: String, idxOffset: Int, enclosing: ListPacket): Int {
@@ -105,7 +125,4 @@ object Day13 : AbstractDay() {
         }
     }
 
-    private fun compute2(input: List<String>): Int {
-        return input.size
-    }
 }
