@@ -72,49 +72,34 @@ object Day14 : AbstractDay() {
         val sandCount get() = settledSand.size
 
         fun addSand(sand: V) {
-            fall(sand)
+            fall(
+                sand = sand,
+                fallCheck = { !rocks.contains(it) && !settledSand.contains(it) },
+                stopCheck = { it.y > maxY }
+            )
         }
 
         fun addSandToFloor(sand: V) {
-            fallToFloor(sand)
+            fall(
+                sand = sand,
+                fallCheck = { !rocks.contains(it) && !settledSand.contains(it) && it.y < maxY + 2 },
+                stopCheck = { settledSand.contains(V(500, 0)) }
+            )
         }
 
-        private fun fall(sand: V) {
-            if (sand.y > maxY) return
-            if (canFall(sand.down())) {
-                fall(sand.down())
-            } else if (canFall(sand.left())) {
-                fall(sand.left())
-            } else if (canFall(sand.right())) {
-                fall(sand.right())
+        private fun fall(sand: V, fallCheck: (V) -> Boolean, stopCheck: (V) -> Boolean) {
+            if (stopCheck(sand)) return
+            if (fallCheck(sand.down())) {
+                fall(sand.down(), fallCheck, stopCheck)
+            } else if (fallCheck(sand.left())) {
+                fall(sand.left(), fallCheck, stopCheck)
+            } else if (fallCheck(sand.right())) {
+                fall(sand.right(), fallCheck, stopCheck)
             } else {
                 // settled
                 settledSand.add(sand)
                 return
             }
-        }
-
-        private fun fallToFloor(sand: V) {
-            if (settledSand.contains(V(500, 0))) return
-            if (canFallToFloor(sand.down())) {
-                fallToFloor(sand.down())
-            } else if (canFallToFloor(sand.left())) {
-                fallToFloor(sand.left())
-            } else if (canFallToFloor(sand.right())) {
-                fallToFloor(sand.right())
-            } else {
-                // settled
-                settledSand.add(sand)
-                return
-            }
-        }
-
-        private fun canFall(sand: V): Boolean {
-            return !rocks.contains(sand) && !settledSand.contains(sand)
-        }
-
-        private fun canFallToFloor(sand: V): Boolean {
-            return !rocks.contains(sand) && !settledSand.contains(sand) && sand.y < maxY + 2
         }
     }
 
