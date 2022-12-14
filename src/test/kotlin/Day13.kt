@@ -7,28 +7,46 @@ object Day13 : AbstractDay() {
     @Test
     fun part1() {
         assertEquals(13, compute1(testInput))
-        assertEquals(0, compute1(puzzleInput))
+        //assertEquals(0, compute1(puzzleInput))
     }
 
     @Test
     fun part2() {
-        assertEquals(0, compute2(testInput))
-        assertEquals(0, compute2(puzzleInput))
+        assertEquals(23, compute2(testInput))
+        assertEquals(449, compute2(puzzleInput))
     }
 
     @Test
     fun testCompare() {
-        assertEquals(1, compute1(listOf("[[1],[2]]")))
+        assertEquals(
+            0, compute1(
+                listOf(
+                    "[7,7,7,7]",
+                    "[7,7,7]",
+                )
+            )
+        )
+
+        assertEquals(
+            0, compute1(
+                listOf(
+                    "[9]",
+                    "[[8,7,6]]",
+                )
+            )
+        )
     }
 
     private fun compute1(input: List<String>): Int {
-        return input
+        val debugVar = input
             .filter { line -> line.isNotEmpty() }
             .chunked(2) { lines ->
                 val (left, right) = lines.map { parse(it) }
                 left <= right
             }.mapIndexed { index, right -> index + 1 to right }
-            .filter { it.second }
+
+        return debugVar
+            .filter { it.second } // filter pairs in right order
             .sumOf { it.first }
     }
 
@@ -80,32 +98,36 @@ object Day13 : AbstractDay() {
             packets.add(p)
         }
 
+        private fun getOrNull(idx: Int) = packets.getOrNull(idx)
+
+        private fun isNumber(): Boolean = int != null
+        private fun size(): Int = packets.size
+
         override fun compareTo(other: Packet): Int {
-            if (this.int != null && other.int != null) return int.compareTo(other.int)
-            val size = max(this.packets.size, other.packets.size)
+            val size = max(this.size(), other.size())
             for (i in 0 until size) {
-                val left = this.packets.getOrNull(i) ?: this.int
-                val right = other.packets.getOrNull(i) ?: other.int
-                if (left != null && right != null) {
-                    val c = if (left is Int && right is Int) {
-                        left.compareTo(right)
-                    } else if (left is Packet && right is Packet) {
-                        left.compareTo(right)
+                val nextLeft = this.getOrNull(i)
+                val nextRight = other.getOrNull(i)
+                val c = if (nextLeft != null && nextRight != null) {
+                    if (nextLeft.isNumber() && nextRight.isNumber()) {
+                        nextLeft.int!!.compareTo(nextRight.int!!)
                     } else {
-                        val l = if (left is Int) Packet(left) else left as Packet
-                        val r = if (right is Int) Packet(right) else right as Packet
+                        val l = if (nextLeft.isNumber()) p(nextLeft) else nextLeft
+                        val r = if (nextRight.isNumber()) p(nextRight) else nextRight
                         l.compareTo(r)
                     }
-                    if (c != 0) return c
-                }
-                if (left == null && right != null) {
+                } else if (nextLeft == null) {
                     return -1 // left ran out of items
-                }
-                if (left != null && right == null) {
+                } else {
                     return 1 // right ran out of items
                 }
+                if (c != 0) return c // continue only if same
             }
             return -1 // if we made it this far it's fine
+        }
+
+        companion object {
+            fun p(p: Packet) = Packet(null, mutableListOf(p))
         }
     }
 
