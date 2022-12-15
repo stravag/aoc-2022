@@ -1,42 +1,8 @@
 import org.junit.jupiter.api.Test
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.test.assertEquals
 
 object Day15 : AbstractDay() {
-
-    /*
-
-                               1    1    2    2
-                     0    5    0    5    0    5
-                -2 ..........#.................
-                -1 .........###................
-                 0 ....S...#####...............
-                 1 .......#######........S.....
-                 2 ......#########S............
-                 3 .....###########SB..........
-                 4 ....#############...........
-                 5 ...###############..........
-                 6 ..#################.........
-                 7 .#########S#######S#........
-                 8 ..#################.........
-                 9 ...###############..........
-                10 ....B############...........
-                11 ..S..###########............
-                12 ......#########.............
-                13 .......#######..............
-                14 ........#####.S.......S.....
-                15 B........###................
-                16 ..........#SB...............
-                17 ................S..........B
-                18 ....S.......................
-                19 ............................
-                20 ............S......S........
-                21 ............................
-                22 .......................B....
-
-     */
 
     @Test
     fun part1Test() {
@@ -50,12 +16,12 @@ object Day15 : AbstractDay() {
 
     @Test
     fun part2Test() {
-        assertEquals(14, compute2(testInput))
+        assertEquals(56000011, compute2(testInput, 20))
     }
 
     @Test
     fun part2() {
-        assertEquals(32, compute2(puzzleInput))
+        assertEquals(32, compute2(puzzleInput, 4000000))
     }
 
     @Test
@@ -71,11 +37,6 @@ object Day15 : AbstractDay() {
         //assertEquals(18, pair.noBeaconPoints(7).count())
         //assertEquals(1, pair.noBeaconPoints(16).count())
         assertEquals(12, pair.noBeaconPoints(10).count())
-    }
-
-    @Test
-    fun print() {
-        parse(testInput).print(3)
     }
 
     private fun compute1(input: List<String>, row: Int): Int {
@@ -96,8 +57,9 @@ object Day15 : AbstractDay() {
         return Map(pairs)
     }
 
-    private fun compute2(input: List<String>): Int {
-        return input.size
+    private fun compute2(input: List<String>, space: Int): Int {
+        val beacon = parse(input).findBeacon(space)
+        return beacon.x * 4000000 + beacon.y
     }
 
     data class SB(val s: S, val b: B) {
@@ -136,51 +98,45 @@ object Day15 : AbstractDay() {
     class Map(
         val pairs: List<SB>,
     ) {
-        val xRange: IntRange
-        val yRange: IntRange
-        val sensors: Set<S>
-        val beacons: Set<B>
+        private val sensorsPos: Set<P>
+        private val beaconsPos: Set<P>
 
         init {
-            val minX = pairs.minOf { (s, b) -> min(s.x, b.x) }
-            val maxX = pairs.maxOf { (s, b) -> max(s.x, b.x) }
-            xRange = minX..maxX
-            val minY = pairs.minOf { (s, b) -> min(s.y, b.y) }
-            val maxY = pairs.maxOf { (s, b) -> max(s.y, b.y) }
-            yRange = minY..maxY
-
-            val (s, b) = pairs.flatMap { listOf(it.s, it.b) }
+            val (s, b) = pairs
+                .flatMap { listOf(it.s, it.b) }
                 .partition { it is S }
 
-            sensors = s.map { it as S }.toSet()
-            beacons = b.map { it as B }.toSet()
-        }
-
-        fun print(pair: Int) {
-            val refPair = pairs[pair - 1]
-            for (y in yRange) {
-                val noBeaconsPos = refPair.noBeaconPoints(y)
-                for (x in xRange) {
-                    val p = P(x, y)
-                    if (sensors.contains(S(p))) print('S')
-                    else if (beacons.contains(B(p))) print('B')
-                    else if (noBeaconsPos.contains(p)) print('#')
-                    else print('.')
-                }
-                println()
-            }
+            sensorsPos = s.map { (it as S).p }.toSet()
+            beaconsPos = b.map { (it as B).p }.toSet()
         }
 
         fun noBeaconsPositions(row: Int): Set<P> {
             return pairs
-                .fold(mutableSetOf<P>()) { acc, it ->
+                .fold(mutableSetOf()) { acc, it ->
                     acc.addAll(it.noBeaconPoints(row))
                     acc
                 }
         }
 
-        fun findBeacon(space: Int) {
-            for (x in )
+        fun noBeaconsPositions2(row: Int, space: Int): Set<P> {
+            return pairs
+                .fold(mutableSetOf()) { acc, it ->
+                    acc.addAll(it.noBeaconPoints(row))
+                    acc
+                }
+        }
+
+        fun findBeacon(space: Int): P {
+            for (y in 0..space) {
+                val noBeacons = noBeaconsPositions(y)
+                for (x in 0..space) {
+                    val p = P(x, y)
+                    if (!noBeacons.contains(p) && !sensorsPos.contains(p) && !beaconsPos.contains(p)) {
+                        return p
+                    }
+                }
+            }
+            throw IllegalArgumentException("Couldn't find beacon")
         }
     }
 }
