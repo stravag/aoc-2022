@@ -84,24 +84,20 @@ object Day15 : AbstractDay() {
             pairs.forEach { pair ->
                 val sensor = pair.s
                 val radius = searchRadius(pair)
-                val minX = max(0, sensor.x - radius - 1)
-                val maxX = min(space, sensor.x + radius + 1)
-                for (x in minX..maxX) {
+                val xEdgeLeft = max(0, sensor.x - radius - 1)
+                val xEdgeRight = min(space, sensor.x + radius + 1)
+                for (x in xEdgeLeft..xEdgeRight) {
                     val diffX = abs(x - sensor.x)
-                    val possibleY1 = sensor.y - (radius - diffX) - 1
-                    val possibleY2 = sensor.y + (radius - diffX) + 1
-                    listOf(possibleY1, possibleY2).forEach { y ->
-                        if (y in (0..space)) {
-                            val p = P(x, y)
-                            val notInRanges = pairs.none { otherPair ->
-                                val otherSensor = otherPair.s
-                                val otherRadius = searchRadius(otherPair)
-                                searchRadius(p, otherSensor) <= otherRadius
-                            }
-                            if (notInRanges) {
-                                return p
-                            }
+                    val yEdgeTop = max(0, min(space, sensor.y - (radius - diffX) - 1))
+                    val yEdgeBottom = max(0, min(space, sensor.y + (radius - diffX) + 1))
+                    listOf(yEdgeTop, yEdgeBottom).forEach { y ->
+                        val possibleBeacon = P(x, y)
+                        val notInRanges = pairs.none { otherPair ->
+                            val otherSensor = otherPair.s
+                            val otherRadius = searchRadius(otherPair)
+                            searchRadius(possibleBeacon, otherSensor) <= otherRadius
                         }
+                        if (notInRanges) return possibleBeacon
                     }
                 }
             }
