@@ -70,7 +70,7 @@ object Day15 : AbstractDay() {
         //assertEquals(0, pair.noBeaconPoints(-3).count())
         //assertEquals(18, pair.noBeaconPoints(7).count())
         //assertEquals(1, pair.noBeaconPoints(16).count())
-        //assertEquals(12, pair.noBeaconPoints(10).count())
+        assertEquals(12, pair.noBeaconPoints(10).count())
     }
 
     @Test
@@ -79,7 +79,7 @@ object Day15 : AbstractDay() {
     }
 
     private fun compute1(input: List<String>, row: Int): Int {
-        return parse(input).noBeaconsCount(row)
+        return parse(input).noBeaconsPositions(row).count()
     }
 
     private fun parse(input: List<String>): Map {
@@ -171,12 +171,16 @@ object Day15 : AbstractDay() {
             }
         }
 
-        fun noBeaconsCount(row: Int): Int {
+        fun noBeaconsPositions(row: Int): Set<P> {
             return pairs
                 .fold(mutableSetOf<P>()) { acc, it ->
                     acc.addAll(it.noBeaconPoints(row))
                     acc
-                }.count()
+                }
+        }
+
+        fun findBeacon(space: Int) {
+            for (x in )
         }
     }
 }
