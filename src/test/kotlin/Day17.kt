@@ -35,8 +35,10 @@ object Day17 : AbstractDay() {
         return chamber.height
     }
 
-    private fun compute2(input: List<String>): Int {
-        return parse(input).hashCode()
+    private fun compute2(input: List<String>): Long {
+        val wind = parse(input)
+        Chamber(wind)
+        TODO("find out after how many iterations it repeats itself. then simply calculate based on that number")
     }
 
     private fun parse(input: List<String>): Wind {

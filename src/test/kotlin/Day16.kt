@@ -29,14 +29,12 @@ object Day16 : AbstractDay() {
             findShortestPaths(it)
         }
 
-        val maxFlow = findHighestFlow(
+        return findHighestFlow(
             openValves = emptySet(),
             shortestPaths = shortestPaths,
             currentValve = valves.getValue("AA"),
             remainingMinutes = 30,
         )
-
-        return maxFlow
     }
 
     private fun findHighestFlow(
@@ -95,7 +93,8 @@ object Day16 : AbstractDay() {
     }
 
     private fun compute2(input: List<String>): Int {
-        return parse(input).hashCode()
+        parse(input).hashCode()
+        TODO()
     }
 
     private fun parse(input: List<String>): Map<String, Valve> {
