@@ -25,43 +25,49 @@ object Day16 : AbstractDay() {
 
     private fun compute1(input: List<String>): Int {
         val valves = parse(input)
-        val startValve = valves.getValue("AA")
-
-        var flowSum = 0
-        var currentValve = startValve
-        var remainingMinutes = 30
-        while (remainingMinutes > 0) {
-            val shortestPaths = findShortestPaths(currentValve)
-
-            // THIS IS INCORRECT!
-            val (nextValve, distance) = shortestPaths
-                .maxByOrNull { (valve, distance) ->
-                    val timeUntilValveIsOn = distance * 2 + 1
-                    val potentialTotalFlow = (remainingMinutes - timeUntilValveIsOn) * valve.flow
-                    potentialTotalFlow
-                } ?: break
-
-            val elapsedMinutesForMoveAndOpen = distance + 1
-            remainingMinutes -= elapsedMinutesForMoveAndOpen
-            currentValve = nextValve
-            currentValve.open()
-
-            flowSum += remainingMinutes * currentValve.flow
+        val shortestPaths: Map<Valve, Map<Valve, Int>> = valves.values.associateWith {
+            findShortestPaths(it)
         }
-        return flowSum
+
+        val maxFlow = findHighestFlow(
+            openValves = emptySet(),
+            shortestPaths = shortestPaths,
+            currentValve = valves.getValue("AA"),
+            remainingMinutes = 30,
+        )
+
+        return maxFlow
     }
 
-    private fun todo(
-        shortestPathsToOpenValves: Map<Valve, Map<Valve, Int>>,
+    private fun findHighestFlow(
+        openValves: Set<Valve>,
+        shortestPaths: Map<Valve, Map<Valve, Int>>,
+        currentValve: Valve,
         remainingMinutes: Int
-    ): List<Pair<Valve, Int>> {
-        val todo = shortestPathsToOpenValves
-            .map { (valve, path) ->
-                val timeUntilValveIsOn = path.size + 1
-                val potentialTotalFlow = (remainingMinutes - timeUntilValveIsOn) * valve.flow
-                valve to potentialTotalFlow
+    ): Int {
+        val allValvesOpen = openValves.size == shortestPaths.entries.first().value.size
+        if (remainingMinutes <= 0 || allValvesOpen) {
+            return 0
+        }
+
+        var maxFlow = 0
+        shortestPaths
+            .getValue(currentValve)
+            .filterNot { openValves.contains(it.key) }
+            .forEach { (valve, distance) ->
+                val timeUntilValveIsOn = distance + 1
+                val flow = findHighestFlow(
+                    openValves = openValves + currentValve,
+                    shortestPaths = shortestPaths,
+                    currentValve = valve,
+                    remainingMinutes = remainingMinutes - timeUntilValveIsOn,
+                )
+                if (flow > maxFlow) {
+                    maxFlow = flow
+                }
             }
-        return todo
+
+        return remainingMinutes * currentValve.flow + maxFlow
     }
 
     private fun findShortestPaths(startValve: Valve): Map<Valve, Int> {
@@ -85,7 +91,6 @@ object Day16 : AbstractDay() {
         }
         return shortestDistances
             .filter { (valve, _) -> valve.hasFlow() }
-            .filterNot { (valve, _) -> valve.open }
     }
 
     private fun compute2(input: List<String>): Int {
@@ -110,20 +115,17 @@ object Day16 : AbstractDay() {
             valve.add(otherValves)
         }
         return nodesLookup
+            .filter { it.value.hasFlow() || it.key == "AA" }
     }
 
     data class Valve(
         val name: String
     ) {
         var flow: Int = 0
-        var open: Boolean = false
         val nextValves: MutableSet<Valve> = mutableSetOf()
 
         fun add(other: List<Valve>) = nextValves.addAll(other)
         fun hasFlow() = flow != 0
-        fun open() {
-            open = true
-        }
 
         override fun toString(): String {
             return "$name ($flow)"
