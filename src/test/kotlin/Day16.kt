@@ -10,7 +10,7 @@ object Day16 : AbstractDay() {
 
     @Test
     fun part1Puzzle() {
-        assertEquals(1, compute1(puzzleInput))
+        assertEquals(1653, compute1(puzzleInput))
     }
 
     @Test
@@ -45,27 +45,28 @@ object Day16 : AbstractDay() {
         currentValve: Valve,
         remainingMinutes: Int
     ): Int {
-        val allValvesOpen = openValves.size == shortestPaths.entries.first().value.size
-        if (remainingMinutes <= 0 || allValvesOpen) {
+        if (remainingMinutes <= 0) {
             return 0
         }
 
         var maxFlow = 0
-        shortestPaths
+        val nextValves = shortestPaths
             .getValue(currentValve)
+            .filterNot { currentValve == it.key }
             .filterNot { openValves.contains(it.key) }
-            .forEach { (valve, distance) ->
-                val timeUntilValveIsOn = distance + 1
-                val flow = findHighestFlow(
-                    openValves = openValves + currentValve,
-                    shortestPaths = shortestPaths,
-                    currentValve = valve,
-                    remainingMinutes = remainingMinutes - timeUntilValveIsOn,
-                )
-                if (flow > maxFlow) {
-                    maxFlow = flow
-                }
+
+        nextValves.forEach { (nextValve, distance) ->
+            val timeUntilValveIsOn = distance + 1
+            val flow = findHighestFlow(
+                openValves = openValves + currentValve,
+                shortestPaths = shortestPaths,
+                currentValve = nextValve,
+                remainingMinutes = remainingMinutes - timeUntilValveIsOn,
+            )
+            if (flow > maxFlow) {
+                maxFlow = flow
             }
+        }
 
         return remainingMinutes * currentValve.flow + maxFlow
     }
