@@ -1,4 +1,6 @@
 import org.junit.jupiter.api.Test
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.test.assertEquals
 
 object Day18 : AbstractDay() {
@@ -20,13 +22,18 @@ object Day18 : AbstractDay() {
     }
 
     @Test
-    fun part2PuzzleAttemp1() {
+    fun part2PuzzleAttempt1() {
         assertEquals(1, compute2Attempt1(puzzleInput))
     }
 
     @Test
-    fun part2PuzzleAttemp2() {
+    fun part2PuzzleAttempt2() {
         assertEquals(1, compute2Attempt2(puzzleInput))
+    }
+
+    @Test
+    fun part2PuzzleAttempt3() {
+        assertEquals(1, compute2Attempt3(testInput))
     }
 
     private fun compute1(input: List<String>): Int {
@@ -74,6 +81,42 @@ object Day18 : AbstractDay() {
         val airBubbles = findAirBubbles(blocks)
 
         return surfaceArea - airBubbles * 6
+    }
+
+    private fun compute2Attempt3(input: List<String>): Int {
+        val container = Container()
+        val rocks = input
+            .map { Block.of(it) }
+            .onEach { container.adjustTo(it) }
+            .toSet()
+
+        return 0
+    }
+
+    private class Container {
+        private var minPos = Block(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE)
+        private var maxPos = Block(Int.MIN_VALUE, Int.MIN_VALUE, Int.MIN_VALUE)
+
+        fun adjustTo(block: Block) {
+            // container should include a padding of 1 hence the 1 correction
+            minPos = Block(
+                x = min(minPos.x, block.x - 1),
+                y = min(minPos.y, block.y - 1),
+                z = min(minPos.z, block.z - 1),
+            )
+            maxPos = Block(
+                x = max(maxPos.x, block.x + 1),
+                y = max(maxPos.y, block.y + 1),
+                z = max(maxPos.z, block.z + 1),
+            )
+        }
+
+        fun isInBounds(block: Block): Boolean {
+            val xInbound = minPos.x <= block.x && block.x <= maxPos.x
+            val yInbound = minPos.y <= block.y && block.y <= maxPos.y
+            val zInbound = minPos.z <= block.z && block.z <= maxPos.z
+            return xInbound && yInbound && zInbound
+        }
     }
 
     private fun findAirBubbles(blocks: Set<Block>): Int {
