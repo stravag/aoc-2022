@@ -18,6 +18,8 @@ object Day17 : AbstractDay() {
     fun part2Test() {
         assertEquals(120, compute1(testInput, 76))
         assertEquals(120, compute2(testInput, 76))
+
+        assertEquals(1514285714288, compute2(testInput, 1000000000000L))
     }
 
     @Test
@@ -32,7 +34,7 @@ object Day17 : AbstractDay() {
         repeat(rockCount) {
             chamber.dropRock()
         }
-        chamber.print()
+        chamber.printTopAndBottom()
         return chamber.height
     }
 
@@ -43,19 +45,23 @@ object Day17 : AbstractDay() {
         val seenPatterns = mutableSetOf<Pattern>()
         while (true) {
             val heightBeforeRock = chamber.height
-            chamber.dropRock()
-
+            val rockIdx = chamber.rockIdx
+            val windIdx = wind.windIdx
+            val topDistancesToTop = chamber.topDistancesToTop
             val unseen = seenPatterns.add(
                 Pattern(
-                    rockIdx = chamber.rockIdx,
-                    windIdx = 0,
-                    topDistancesToTop = chamber.topDistancesToTop
+                    rockIdx = rockIdx,
+                    windIdx = windIdx,
+                    topDistancesToTop = topDistancesToTop
                 )
             )
-            if (!unseen) {
+
+            if (unseen) {
+                chamber.dropRock()
+            } else {
                 val repeatsAfter = chamber.rockCount - 1
-                chamber.print()
-                println("Repeats after $repeatsAfter rocks")
+                chamber.printEntireChamber()
+                println("Repeats after $repeatsAfter rocks (rockIdx=${chamber.rockIdx} windIdx=$wind.")
 
                 val repeats = rockCount / repeatsAfter
                 val leftOvers = rockCount % repeatsAfter
@@ -122,7 +128,28 @@ object Day17 : AbstractDay() {
         }
 
         @Suppress("unused")
-        fun print(fallingRock: Rock? = null) {
+        fun printTopAndBottom() {
+            println()
+            println()
+            listOf(0, 1, height).reversed().forEach { y ->
+                for (x in (-1..7)) {
+                    val p = P(x, y)
+                    val char = when {
+                        y == 0 && x == -1 -> '+'
+                        y == 0 && x == 7 -> '+'
+                        x == -1 || x == 7 -> '|'
+                        y == 0 -> '-'
+                        rockPoints.contains(p) -> '#'
+                        else -> '.'
+                    }
+                    print(char)
+                }
+                println()
+            }
+        }
+
+        @Suppress("unused")
+        fun printEntireChamber() {
             println()
             println()
             for (y in (0..height + 6).reversed()) {
@@ -133,7 +160,6 @@ object Day17 : AbstractDay() {
                         y == 0 && x == 7 -> '+'
                         x == -1 || x == 7 -> '|'
                         y == 0 -> '-'
-                        fallingRock?.points.orEmpty().contains(p) -> '@'
                         rockPoints.contains(p) -> '#'
                         else -> '.'
                     }
@@ -155,9 +181,12 @@ object Day17 : AbstractDay() {
     ) {
         private var count: Int = 0
 
+        val windIdx: Int get() = count % input.length
+
         val push: (Rock, Set<P>) -> Unit
             get() {
-                val direction = input[count++ % input.length]
+                val direction = input[windIdx]
+                count++
                 return when (direction) {
                     '>' -> Rock::tryPushRight
                     '<' -> Rock::tryPushLeft
