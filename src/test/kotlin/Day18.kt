@@ -17,24 +17,12 @@ object Day18 : AbstractDay() {
 
     @Test
     fun part2Test() {
-        assertEquals(58, compute2Attempt1(testInput))
-        assertEquals(58, compute2Attempt2(testInput))
-        assertEquals(58, compute2Attempt3(testInput))
+        assertEquals(58, compute2(testInput))
     }
 
     @Test
-    fun part2PuzzleAttempt1() {
-        assertEquals(1, compute2Attempt1(puzzleInput))
-    }
-
-    @Test
-    fun part2PuzzleAttempt2() {
-        assertEquals(1, compute2Attempt2(puzzleInput))
-    }
-
-    @Test
-    fun part2PuzzleAttempt3() {
-        assertEquals(1, compute2Attempt3(puzzleInput))
+    fun part2Puzzle() {
+        assertEquals(2466, compute2(puzzleInput))
     }
 
     private fun compute1(input: List<String>): Int {
@@ -54,57 +42,27 @@ object Day18 : AbstractDay() {
         return surfaceArea
     }
 
-    private fun compute2Attempt1(input: List<String>): Int {
-        var surfaceArea = 0
-        val blocks = mutableSetOf<Block>()
+    private fun compute2(input: List<String>): Int {
+        val container = Container()
+
         input
             .map { Block.of(it) }
-            .forEach { block ->
-                val connectedBlocks = block.adjacentBlocks
-                    .count { blocks.contains(it) }
+            .forEach { container.include(it) }
 
-                val airBubbles = block.adjacentBlocks.count { isTrapped(it, blocks + block) }
-                surfaceArea -= airBubbles * 6
-                surfaceArea -= connectedBlocks
-                surfaceArea += 6 - connectedBlocks
-                blocks.add(block)
-            }
-
-        return surfaceArea
-    }
-
-    private fun compute2Attempt2(input: List<String>): Int {
-        val surfaceArea = compute1(input)
-        val blocks = input
-            .map { Block.of(it) }
-            .toSet()
-
-        val airBubbles = findAirBubbles(blocks)
-
-        return surfaceArea - airBubbles * 6
-    }
-
-    private fun compute2Attempt3(input: List<String>): Int {
-        val container = Container()
-        val rocks = input
-            .map { Block.of(it) }
-            .onEach { container.adjustTo(it) }
-            .toSet()
-
-        container.rocks = rocks
-        container.expandWater()
-
-        return container.surfaceCount
+        return container.determineSurfaceCount()
     }
 
     private class Container {
-        var surfaceCount = 0
-        var rocks: Set<Block> = emptySet()
-
+        private val rocks: MutableSet<Block> = mutableSetOf()
         private var minPos = Block(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE)
         private var maxPos = Block(Int.MIN_VALUE, Int.MIN_VALUE, Int.MIN_VALUE)
 
-        fun adjustTo(block: Block) {
+        fun include(block: Block) {
+            rocks.add(block)
+            adjustTo(block)
+        }
+
+        private fun adjustTo(block: Block) {
             // container should include a padding of 1 hence the 1 correction
             minPos = Block(
                 x = min(minPos.x, block.x - 1),
@@ -118,7 +76,8 @@ object Day18 : AbstractDay() {
             )
         }
 
-        fun expandWater() {
+        fun determineSurfaceCount(): Int {
+            var surfaceCount = 0
             val queue = mutableListOf<Block>()
             val water = mutableSetOf<Block>()
             queue.add(minPos)
@@ -140,6 +99,7 @@ object Day18 : AbstractDay() {
                         }
                     }
             }
+            return surfaceCount
         }
 
         private fun isInBounds(block: Block): Boolean {
@@ -148,41 +108,6 @@ object Day18 : AbstractDay() {
             val zInbound = minPos.z <= block.z && block.z <= maxPos.z
             return xInbound && yInbound && zInbound
         }
-    }
-
-    private fun findAirBubbles(blocks: Set<Block>): Int {
-        val foundAirBubbles = mutableSetOf<Block>()
-        val queue = mutableListOf<Block>()
-        val explored = mutableSetOf<Block>()
-        queue.add(blocks.first())
-        while (queue.isNotEmpty()) {
-            val currentBlock = queue.removeFirst()
-            val airBubbles = findAirBubblesNextTo(currentBlock, blocks)
-            foundAirBubbles.addAll(airBubbles)
-            if (explored.size == blocks.size) {
-                return foundAirBubbles.size
-            }
-            currentBlock
-                .adjacentBlocks
-                .filter { blocks.contains(it) }
-                .forEach { adjacentBlock ->
-                    if (!explored.contains(adjacentBlock)) {
-                        explored.add(adjacentBlock)
-                        queue.add(adjacentBlock)
-                    }
-                }
-        }
-        return foundAirBubbles.size
-    }
-
-    private fun findAirBubblesNextTo(block: Block, blocks: Set<Block>): Set<Block> {
-        return block.adjacentBlocks
-            .filter { isTrapped(it, blocks) }
-            .toSet()
-    }
-
-    private fun isTrapped(block: Block, blocks: Set<Block>): Boolean {
-        return !blocks.contains(block) && block.adjacentBlocks.all { blocks.contains(it) }
     }
 
     data class Block(
