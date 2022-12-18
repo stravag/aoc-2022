@@ -1,5 +1,4 @@
 import org.junit.jupiter.api.Test
-import kotlin.math.max
 import kotlin.test.assertEquals
 
 object Day18 : AbstractDay() {
@@ -16,12 +15,18 @@ object Day18 : AbstractDay() {
 
     @Test
     fun part2Test() {
-        assertEquals(58, compute2(testInput))
+        assertEquals(58, compute2Attempt1(testInput))
+        assertEquals(58, compute2Attempt2(testInput))
     }
 
     @Test
-    fun part2Puzzle() {
-        assertEquals(1, compute2(puzzleInput))
+    fun part2PuzzleAttemp1() {
+        assertEquals(1, compute2Attempt1(puzzleInput))
+    }
+
+    @Test
+    fun part2PuzzleAttemp2() {
+        assertEquals(1, compute2Attempt2(puzzleInput))
     }
 
     private fun compute1(input: List<String>): Int {
@@ -30,7 +35,7 @@ object Day18 : AbstractDay() {
         input
             .map { Block.of(it) }
             .forEach { block ->
-                val connectedBlocks = block.adjacentBlocks()
+                val connectedBlocks = block.adjacentBlocks
                     .count { blocks.contains(it) }
 
                 surfaceArea -= connectedBlocks
@@ -41,16 +46,16 @@ object Day18 : AbstractDay() {
         return surfaceArea
     }
 
-    private fun compute2(input: List<String>): Int {
+    private fun compute2Attempt1(input: List<String>): Int {
         var surfaceArea = 0
         val blocks = mutableSetOf<Block>()
         input
             .map { Block.of(it) }
             .forEach { block ->
-                val connectedBlocks = block.adjacentBlocks()
+                val connectedBlocks = block.adjacentBlocks
                     .count { blocks.contains(it) }
 
-                val airBubbles = block.adjacentBlocks().count { isTrapped(it, blocks + block) }
+                val airBubbles = block.adjacentBlocks.count { isTrapped(it, blocks + block) }
                 surfaceArea -= airBubbles * 6
                 surfaceArea -= connectedBlocks
                 surfaceArea += 6 - connectedBlocks
@@ -60,8 +65,50 @@ object Day18 : AbstractDay() {
         return surfaceArea
     }
 
+    private fun compute2Attempt2(input: List<String>): Int {
+        val surfaceArea = compute1(input)
+        val blocks = input
+            .map { Block.of(it) }
+            .toSet()
+
+        val airBubbles = findAirBubbles(blocks)
+
+        return surfaceArea - airBubbles * 6
+    }
+
+    private fun findAirBubbles(blocks: Set<Block>): Int {
+        val foundAirBubbles = mutableSetOf<Block>()
+        val queue = mutableListOf<Block>()
+        val explored = mutableSetOf<Block>()
+        queue.add(blocks.first())
+        while (queue.isNotEmpty()) {
+            val currentBlock = queue.removeFirst()
+            val airBubbles = findAirBubblesNextTo(currentBlock, blocks)
+            foundAirBubbles.addAll(airBubbles)
+            if (explored.size == blocks.size) {
+                return foundAirBubbles.size
+            }
+            currentBlock
+                .adjacentBlocks
+                .filter { blocks.contains(it) }
+                .forEach { adjacentBlock ->
+                    if (!explored.contains(adjacentBlock)) {
+                        explored.add(adjacentBlock)
+                        queue.add(adjacentBlock)
+                    }
+                }
+        }
+        return foundAirBubbles.size
+    }
+
+    private fun findAirBubblesNextTo(block: Block, blocks: Set<Block>): Set<Block> {
+        return block.adjacentBlocks
+            .filter { isTrapped(it, blocks) }
+            .toSet()
+    }
+
     private fun isTrapped(block: Block, blocks: Set<Block>): Boolean {
-        return !blocks.contains(block) && block.adjacentBlocks().all { blocks.contains(it) }
+        return !blocks.contains(block) && block.adjacentBlocks.all { blocks.contains(it) }
     }
 
     data class Block(
@@ -69,16 +116,17 @@ object Day18 : AbstractDay() {
         val y: Int,
         val z: Int,
     ) {
-        fun adjacentBlocks(): List<Block> {
-            return listOf(
-                copy(x = x + 1),
-                copy(x = x - 1),
-                copy(y = y + 1),
-                copy(y = y - 1),
-                copy(z = z + 1),
-                copy(z = z - 1),
-            )
-        }
+        val adjacentBlocks: List<Block>
+            get() {
+                return listOf(
+                    copy(x = x + 1),
+                    copy(x = x - 1),
+                    copy(y = y + 1),
+                    copy(y = y - 1),
+                    copy(z = z + 1),
+                    copy(z = z - 1),
+                )
+            }
 
         companion object {
             fun of(s: String): Block {
