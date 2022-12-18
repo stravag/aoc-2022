@@ -15,66 +15,84 @@ object Day17 : AbstractDay() {
     }
 
     @Test
+    fun tests() {
+        compute1(testInput, 35)
+        compute1(testInput, 36)
+    }
+
+    @Test
     fun part2Test() {
-        assertEquals(120, compute1(testInput, 76))
-        assertEquals(120, compute2(testInput, 76))
+        val desiredRockCount = 64L
+        assertEquals(compute1(testInput, desiredRockCount).toLong(), compute2(testInput, desiredRockCount))
 
         assertEquals(1514285714288, compute2(testInput, 1000000000000L))
     }
 
     @Test
     fun part2Puzzle() {
-        assertEquals(1, compute2(puzzleInput, 0L))
+        assertEquals(1, compute2(puzzleInput, 1000000000000L))
     }
 
-    private fun compute1(input: List<String>, rockCount: Int): Int {
+    private fun compute1(input: List<String>, rockCount: Long): Int {
         val wind = parse(input)
         val chamber = Chamber(wind)
 
-        repeat(rockCount) {
+        repeat(rockCount.toInt()) {
             chamber.dropRock()
         }
-        chamber.printTopAndBottom()
         return chamber.height
     }
 
-    private fun compute2(input: List<String>, rockCount: Long): Long {
+    private fun compute2(input: List<String>, desiredRockCount: Long): Long {
         val wind = parse(input)
         val chamber = Chamber(wind)
 
-        val seenPatterns = mutableSetOf<Pattern>()
+        val seenPatterns = mutableMapOf<Pattern, PatternData>()
         while (true) {
-            val heightBeforeRock = chamber.height
             val rockIdx = chamber.rockIdx
+
+            chamber.dropRock()
+
             val windIdx = wind.windIdx
             val topDistancesToTop = chamber.topDistancesToTop
-            val unseen = seenPatterns.add(
-                Pattern(
-                    rockIdx = rockIdx,
-                    windIdx = windIdx,
-                    topDistancesToTop = topDistancesToTop
-                )
+            val pattern = Pattern(
+                rockIdx = rockIdx,
+                windIdx = windIdx,
+                topDistancesToTop = topDistancesToTop,
             )
+            val patternData = PatternData(chamber.rockCount, chamber.height)
+            if (chamber.rockCount.toLong() == desiredRockCount) {
+                return chamber.height.toLong()
+            }
+            if (seenPatterns.contains(pattern)) {
+                val patternStart = seenPatterns.getValue(pattern)
+                val rocksInPattern = chamber.rockCount - patternStart.rockCount
+                val heightGainInPattern = chamber.height - patternStart.height
 
-            if (unseen) {
-                chamber.dropRock()
-            } else {
-                val repeatsAfter = chamber.rockCount - 1
-                chamber.printEntireChamber()
-                println("Repeats after $repeatsAfter rocks (rockIdx=${chamber.rockIdx} windIdx=$wind.")
+                println("found repeatingPattern after ${patternStart.rockCount} rocks")
+                println("rocksInPattern = $rocksInPattern")
+                println("heightGainInPattern = $heightGainInPattern")
 
-                val repeats = rockCount / repeatsAfter
-                val leftOvers = rockCount % repeatsAfter
+                val repeats = desiredRockCount / rocksInPattern
+                val leftOvers = desiredRockCount % rocksInPattern
                 chamber.reset()
                 repeat(leftOvers.toInt()) {
                     chamber.dropRock()
                 }
                 val missingHeight = chamber.height
-                val repeatingHeight = heightBeforeRock * repeats
-                return repeatingHeight + missingHeight
+                val repeatingHeight = repeats * heightGainInPattern
+                return (repeatingHeight + missingHeight)
+            } else {
+                seenPatterns[pattern] = patternData
             }
+
         }
     }
+
+    data class PatternData(
+        val rockCount: Int,
+        val height: Int,
+    )
 
     private fun parse(input: List<String>): Wind {
         return Wind(input.single())
@@ -122,8 +140,9 @@ object Day17 : AbstractDay() {
             height = max(height, rock.points.maxOf { it.y })
 
             (0 until 7).forEach { x ->
-                val highestRockPointAtX = rock.points.filter { it.x == x }.maxOfOrNull { it.y } ?: 0
-                topDistancesToTop[x] = height - max(topDistancesToTop[x], highestRockPointAtX)
+                val highestRockPointAtX = rockPoints.filter { it.x == x }.maxOfOrNull { it.y } ?: 0
+                val distanceToTopAtX = height - highestRockPointAtX
+                topDistancesToTop[x] = distanceToTopAtX
             }
         }
 
@@ -174,7 +193,13 @@ object Day17 : AbstractDay() {
         val rockIdx: Int,
         val windIdx: Int,
         val topDistancesToTop: List<Int>,
-    )
+    ) {
+
+        override fun toString(): String {
+            val s = (listOf(rockIdx, windIdx) + topDistancesToTop).joinToString(separator = ";")
+            return "pattern = $s;"
+        }
+    }
 
     private class Wind(
         private val input: String
