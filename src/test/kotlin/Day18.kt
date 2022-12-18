@@ -16,7 +16,7 @@ object Day18 : AbstractDay() {
 
     @Test
     fun part2Test() {
-        assertEquals(1, compute2(testInput))
+        assertEquals(58, compute2(testInput))
     }
 
     @Test
@@ -41,8 +41,27 @@ object Day18 : AbstractDay() {
         return surfaceArea
     }
 
-    private fun compute2(input: List<String>): Long {
-        return 0L
+    private fun compute2(input: List<String>): Int {
+        var surfaceArea = 0
+        val blocks = mutableSetOf<Block>()
+        input
+            .map { Block.of(it) }
+            .forEach { block ->
+                val connectedBlocks = block.adjacentBlocks()
+                    .count { blocks.contains(it) }
+
+                val airBubbles = block.adjacentBlocks().count { isTrapped(it, blocks + block) }
+                surfaceArea -= airBubbles * 6
+                surfaceArea -= connectedBlocks
+                surfaceArea += 6 - connectedBlocks
+                blocks.add(block)
+            }
+
+        return surfaceArea
+    }
+
+    private fun isTrapped(block: Block, blocks: Set<Block>): Boolean {
+        return !blocks.contains(block) && block.adjacentBlocks().all { blocks.contains(it) }
     }
 
     data class Block(
