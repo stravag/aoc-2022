@@ -6,39 +6,68 @@ object Day17 : AbstractDay() {
 
     @Test
     fun part1Test() {
-        assertEquals(3068, compute1(testInput))
+        assertEquals(3068, compute1(testInput, 2022))
     }
 
     @Test
     fun part1Puzzle() {
-        assertEquals(3127, compute1(puzzleInput))
+        assertEquals(3127, compute1(puzzleInput, 2022))
     }
 
     @Test
     fun part2Test() {
-        assertEquals(1, compute2(testInput))
+        assertEquals(120, compute1(testInput, 76))
+        assertEquals(120, compute2(testInput, 76))
     }
 
     @Test
     fun part2Puzzle() {
-        assertEquals(1, compute2(puzzleInput))
+        assertEquals(1, compute2(puzzleInput, 0L))
     }
 
-    private fun compute1(input: List<String>): Int {
+    private fun compute1(input: List<String>, rockCount: Int): Int {
         val wind = parse(input)
         val chamber = Chamber(wind)
 
-        repeat(2022) {
+        repeat(rockCount) {
             chamber.dropRock()
         }
         chamber.print()
         return chamber.height
     }
 
-    private fun compute2(input: List<String>): Long {
+    private fun compute2(input: List<String>, rockCount: Long): Long {
         val wind = parse(input)
-        Chamber(wind)
-        TODO("find out after how many iterations it repeats itself. then simply calculate based on that number")
+        val chamber = Chamber(wind)
+
+        val seenPatterns = mutableSetOf<Pattern>()
+        while (true) {
+            val heightBeforeRock = chamber.height
+            chamber.dropRock()
+
+            val unseen = seenPatterns.add(
+                Pattern(
+                    rockIdx = chamber.rockIdx,
+                    windIdx = 0,
+                    topDistancesToTop = chamber.topDistancesToTop
+                )
+            )
+            if (!unseen) {
+                val repeatsAfter = chamber.rockCount - 1
+                chamber.print()
+                println("Repeats after $repeatsAfter rocks")
+
+                val repeats = rockCount / repeatsAfter
+                val leftOvers = rockCount % repeatsAfter
+                chamber.reset()
+                repeat(leftOvers.toInt()) {
+                    chamber.dropRock()
+                }
+                val missingHeight = chamber.height
+                val repeatingHeight = heightBeforeRock * repeats
+                return repeatingHeight + missingHeight
+            }
+        }
     }
 
     private fun parse(input: List<String>): Wind {
@@ -51,10 +80,21 @@ object Day17 : AbstractDay() {
         val rockPoints: MutableSet<P> = mutableSetOf()
         var rockCount = 0
         var height = 0
+        val topDistancesToTop: MutableList<Int> = MutableList(7) { 0 }
+
+        val rockIdx: Int get() = rockCount % 5
+
+        fun reset() {
+            wind.reset()
+            rockCount = 0
+            height = 0
+            rockPoints.clear()
+            topDistancesToTop.replaceAll { 0 }
+        }
 
         fun dropRock() {
             val dropPos = height + 4
-            val rock = when (rockCount % 5) {
+            val rock = when (rockIdx) {
                 0 -> Rock.minus(dropPos)
                 1 -> Rock.plus(dropPos)
                 2 -> Rock.angle(dropPos)
@@ -74,6 +114,11 @@ object Day17 : AbstractDay() {
             rockCount++
             rockPoints.addAll(rock.points)
             height = max(height, rock.points.maxOf { it.y })
+
+            (0 until 7).forEach { x ->
+                val highestRockPointAtX = rock.points.filter { it.x == x }.maxOfOrNull { it.y } ?: 0
+                topDistancesToTop[x] = height - max(topDistancesToTop[x], highestRockPointAtX)
+            }
         }
 
         @Suppress("unused")
@@ -99,6 +144,12 @@ object Day17 : AbstractDay() {
         }
     }
 
+    private data class Pattern(
+        val rockIdx: Int,
+        val windIdx: Int,
+        val topDistancesToTop: List<Int>,
+    )
+
     private class Wind(
         private val input: String
     ) {
@@ -113,6 +164,10 @@ object Day17 : AbstractDay() {
                     else -> throw RuntimeException()
                 }
             }
+
+        fun reset() {
+            count = 0
+        }
     }
 
     private data class Rock(
