@@ -6,79 +6,60 @@ object Day17 : AbstractDay() {
 
     @Test
     fun part1Test() {
-        assertEquals(3068, compute1(testInput, 2022))
+        assertEquals(3068, compute1(testInput))
     }
 
     @Test
     fun part1Puzzle() {
-        assertEquals(3127, compute1(puzzleInput, 2022))
-    }
-
-    @Test
-    fun tests() {
-        compute1(testInput, 35)
-        compute1(testInput, 36)
+        assertEquals(3127, compute1(puzzleInput))
     }
 
     @Test
     fun part2Test() {
-        val desiredRockCount = 64L
-        assertEquals(compute1(testInput, desiredRockCount).toLong(), compute2(testInput, desiredRockCount))
-
-        assertEquals(1514285714288, compute2(testInput, 1000000000000L))
+        assertEquals(1514285714288, compute2(testInput))
     }
 
     @Test
     fun part2Puzzle() {
-        assertEquals(1, compute2(puzzleInput, 1000000000000L))
+        assertEquals(1542941176480, compute2(puzzleInput))
     }
 
-    private fun compute1(input: List<String>, rockCount: Long): Int {
+    private fun compute1(input: List<String>): Int {
         val wind = parse(input)
         val chamber = Chamber(wind)
 
-        repeat(rockCount.toInt()) {
+        repeat(2022) {
             chamber.dropRock()
         }
         return chamber.height
     }
 
-    private fun compute2(input: List<String>, desiredRockCount: Long): Long {
+    private fun compute2(input: List<String>): Long {
         val wind = parse(input)
         val chamber = Chamber(wind)
 
         val seenPatterns = mutableMapOf<Pattern, PatternData>()
         while (true) {
-            val rockIdx = chamber.rockIdx
-
             chamber.dropRock()
-
-            val windIdx = wind.windIdx
-            val topDistancesToTop = chamber.topDistancesToTop
             val pattern = Pattern(
-                rockIdx = rockIdx,
-                windIdx = windIdx,
-                topDistancesToTop = topDistancesToTop,
+                rockIdx = chamber.rockIdx,
+                windIdx = wind.windIdx,
+                topDistancesToTop = chamber.topDistancesToTop,
             )
             val patternData = PatternData(chamber.rockCount, chamber.height)
-            if (chamber.rockCount.toLong() == desiredRockCount) {
-                return chamber.height.toLong()
-            }
             if (seenPatterns.contains(pattern)) {
                 val patternStart = seenPatterns.getValue(pattern)
                 val rocksInPattern = chamber.rockCount - patternStart.rockCount
                 val heightGainInPattern = chamber.height - patternStart.height
 
-                println("found repeatingPattern after ${patternStart.rockCount} rocks")
-                println("rocksInPattern = $rocksInPattern")
-                println("heightGainInPattern = $heightGainInPattern")
+                val repeats = 1000000000000L / rocksInPattern
+                val leftOvers = 1000000000000L % rocksInPattern
 
-                val repeats = desiredRockCount / rocksInPattern
-                val leftOvers = desiredRockCount % rocksInPattern
                 chamber.reset()
                 repeat(leftOvers.toInt()) {
                     chamber.dropRock()
                 }
+
                 val missingHeight = chamber.height
                 val repeatingHeight = repeats * heightGainInPattern
                 return (repeatingHeight + missingHeight)
@@ -147,30 +128,7 @@ object Day17 : AbstractDay() {
         }
 
         @Suppress("unused")
-        fun printTopAndBottom() {
-            println()
-            println()
-            listOf(0, 1, height).reversed().forEach { y ->
-                for (x in (-1..7)) {
-                    val p = P(x, y)
-                    val char = when {
-                        y == 0 && x == -1 -> '+'
-                        y == 0 && x == 7 -> '+'
-                        x == -1 || x == 7 -> '|'
-                        y == 0 -> '-'
-                        rockPoints.contains(p) -> '#'
-                        else -> '.'
-                    }
-                    print(char)
-                }
-                println()
-            }
-        }
-
-        @Suppress("unused")
-        fun printEntireChamber() {
-            println()
-            println()
+        fun print() {
             for (y in (0..height + 6).reversed()) {
                 for (x in (-1..7)) {
                     val p = P(x, y)
