@@ -19,6 +19,7 @@ object Day18 : AbstractDay() {
     fun part2Test() {
         assertEquals(58, compute2Attempt1(testInput))
         assertEquals(58, compute2Attempt2(testInput))
+        assertEquals(58, compute2Attempt3(testInput))
     }
 
     @Test
@@ -33,7 +34,7 @@ object Day18 : AbstractDay() {
 
     @Test
     fun part2PuzzleAttempt3() {
-        assertEquals(1, compute2Attempt3(testInput))
+        assertEquals(1, compute2Attempt3(puzzleInput))
     }
 
     private fun compute1(input: List<String>): Int {
@@ -90,10 +91,16 @@ object Day18 : AbstractDay() {
             .onEach { container.adjustTo(it) }
             .toSet()
 
-        return 0
+        container.rocks = rocks
+        container.expandWater()
+
+        return container.surfaceCount
     }
 
     private class Container {
+        var surfaceCount = 0
+        var rocks: Set<Block> = emptySet()
+
         private var minPos = Block(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE)
         private var maxPos = Block(Int.MIN_VALUE, Int.MIN_VALUE, Int.MIN_VALUE)
 
@@ -111,7 +118,31 @@ object Day18 : AbstractDay() {
             )
         }
 
-        fun isInBounds(block: Block): Boolean {
+        fun expandWater() {
+            val queue = mutableListOf<Block>()
+            val water = mutableSetOf<Block>()
+            queue.add(minPos)
+            while (queue.isNotEmpty()) {
+                val currentWater = queue.removeFirst()
+                val blocksNextToWater = currentWater.adjacentBlocks
+                    .filter { isInBounds(it) }
+                    .count { rocks.contains(it) }
+                surfaceCount += blocksNextToWater
+
+                currentWater
+                    .adjacentBlocks
+                    .filter { isInBounds(it) }
+                    .filterNot { rocks.contains(it) }
+                    .forEach { adjacentWater ->
+                        if (!water.contains(adjacentWater)) {
+                            water.add(adjacentWater)
+                            queue.add(adjacentWater)
+                        }
+                    }
+            }
+        }
+
+        private fun isInBounds(block: Block): Boolean {
             val xInbound = minPos.x <= block.x && block.x <= maxPos.x
             val yInbound = minPos.y <= block.y && block.y <= maxPos.y
             val zInbound = minPos.z <= block.z && block.z <= maxPos.z
