@@ -30,11 +30,11 @@ class Day19 : AbstractDay() {
                 blueprint.number to 0
             }
 
-        return input.size
+        TODO()
     }
 
     private fun compute2(input: List<String>): Int {
-        return input.size
+        TODO()
     }
 
     private fun parse(line: String): Blueprint {
