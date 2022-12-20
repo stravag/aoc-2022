@@ -1,6 +1,4 @@
 import org.junit.jupiter.api.Test
-import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.test.assertEquals
 
@@ -26,25 +24,9 @@ class Day20 : AbstractDay() {
         assertEquals(4248669215955, compute2(puzzleInput))
     }
 
-    @Test
-    fun tests() {
-        fun mix(index: Int, vararg sequence: Int): List<Int> {
-            val s = Sequence.build(*sequence)
-            s.mix(index)
-            return s.getNumbers()
-        }
-
-        assertEquals(listOf(0, 6, 88, 99), mix(index = 1, 0, 6, 88, 99))
-        assertEquals(listOf(0, 88, 1, 99), mix(index = 1, 0, 1, 88, 99))
-        assertEquals(listOf(0, 3, 88, 99), mix(index = 1, 0, 3, 88, 99))
-    }
-
     private fun compute1(input: List<String>): Int {
         val sequence = parse(input)
-
-        while (sequence.hasNext()) {
-            sequence.mix()
-        }
+        sequence.mix()
 
         return listOf(1000, 2000, 3000).sumOf { sequence.getAfterZero(it) }
     }
@@ -54,10 +36,7 @@ class Day20 : AbstractDay() {
 
         val decryptionKey = 811589153L
         repeat(10) {
-            while (sequence.hasNext()) {
-                sequence.mix(decryptionKey)
-            }
-            sequence.reset()
+            sequence.mix(decryptionKey)
         }
 
         return listOf(1000, 2000, 3000).sumOf { sequence.getAfterZero(it) * decryptionKey }
@@ -67,38 +46,29 @@ class Day20 : AbstractDay() {
         return input.map { it.toInt() }.let { Sequence.build(it) }
     }
 
-    data class Sequence(
-        val sequence: LinkedList<Element>,
-        val unprocessed: LinkedList<Element>,
-        val zeroElement: Element,
+    private data class Sequence(
+        val sequence: MutableList<Element>,
+        val unprocessed: List<Element>,
     ) {
-        private val originalSequence: List<Element> = ArrayList(unprocessed)
-
-        fun reset() {
-            unprocessed.clear()
-            unprocessed.addAll(originalSequence)
-        }
-
-        fun hasNext(): Boolean = unprocessed.isNotEmpty()
-
         fun mix(decryptionKey: Long = 1) {
-            val elementToMix = unprocessed.removeFirst()
-            val index = sequence.indexOf(elementToMix)
-            mix(index, decryptionKey)
+            unprocessed.forEach { elementToMix ->
+                val index = sequence.indexOf(elementToMix)
+                mix(index, decryptionKey)
+            }
         }
 
-        fun mix(index: Int, decryptionKey: Long = 1) {
+        private fun mix(index: Int, decryptionKey: Long = 1) {
             val endIndex = sequence.size - 1
 
             val elementToMix = sequence[index]
-            val numberToMix = ((elementToMix.int * decryptionKey) % endIndex).toInt()
+            val numberToMix = (elementToMix.number * decryptionKey % endIndex).toInt()
 
             val newIndex = if (numberToMix < 0 && abs(numberToMix) >= index) {
                 // wrap around left
                 endIndex - abs(index - abs(numberToMix))
             } else if (numberToMix > 0 && (index + numberToMix) >= endIndex) {
                 // wrap around right
-                0 + index + numberToMix - endIndex
+                index + numberToMix - endIndex
             } else {
                 index + numberToMix
             }
@@ -108,42 +78,26 @@ class Day20 : AbstractDay() {
         }
 
         fun getAfterZero(n: Int): Int {
-            val zeroIndex = sequence.indexOf(zeroElement)
+            val zeroIndex = sequence.indexOfFirst { it.number == 0 }
             val index = (zeroIndex + n) % sequence.size
-            return sequence[index].int
-        }
-
-        fun getNumbers(): List<Int> {
-            return sequence.map { it.int }
-        }
-
-        override fun toString(): String {
-            return sequence.joinToString { it.int.toString() }
+            return sequence[index].number
         }
 
         companion object {
-            fun build(vararg numbers: Int): Sequence {
-                return build(numbers.toList())
-            }
-
             fun build(numbers: List<Int>): Sequence {
-                var zeroElement: Element? = null
-                val nodes = numbers.map {
-                    val element = Element(it)
-                    if (element.int == 0) zeroElement = element
-                    element
+                val nodes = numbers.mapIndexed { index, i ->
+                    Element(i, index)
                 }
                 return Sequence(
-                    sequence = LinkedList(nodes),
-                    unprocessed = LinkedList(nodes),
-                    zeroElement = zeroElement!!
+                    sequence = ArrayList(nodes),
+                    unprocessed = ArrayList(nodes),
                 )
             }
         }
     }
 
-    data class Element(
-        val int: Int,
-        val id: UUID = UUID.randomUUID()
+    private data class Element(
+        val number: Int,
+        private val id: Int, // ensures uniqueness
     )
 }
