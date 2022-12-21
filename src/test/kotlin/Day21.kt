@@ -15,53 +15,84 @@ class Day21 : AbstractDay() {
 
     @Test
     fun part2Test() {
-        assertEquals(0, compute2(testInput))
+        assertEquals(301, compute2(testInput))
     }
 
     @Test
     fun part2Puzzle() {
-        assertEquals(0, compute2(puzzleInput))
+        assertEquals(3715799488132, compute2(puzzleInput))
     }
 
     private fun compute1(input: List<String>): Long {
         val monkeys = parse1(input)
-        val rootMonkey = monkeys.getValue("root")
-
-        return getAnswer(rootMonkey, monkeys)
+        return getAnswer("root", monkeys)
     }
 
-    private fun getAnswer(monkey: Monkey, monkeys: Map<String, Monkey>): Long {
-        return when (monkey) {
+    private fun getAnswer(monkeyName: String, monkeys: Map<String, Monkey>): Long {
+        return when (val monkey = monkeys.getValue(monkeyName)) {
             is NumberMonkey -> monkey.number
             is OperationMonkey -> {
-                val a = getAnswer(monkeys.getValue(monkey.a), monkeys)
-                val b = getAnswer(monkeys.getValue(monkey.b), monkeys)
+                val a = getAnswer(monkey.a, monkeys)
+                val b = getAnswer(monkey.b, monkeys)
                 monkey.operation(a, b)
             }
         }
     }
 
     private fun compute2(input: List<String>): Long {
-        val monkeys = parse2(input)
+        val (monkeys, monkeyParents) = parse2(input)
 
-        val rootMonkey = monkeys.getValue("root") as OperationMonkey
+        // bubble up
+        val operationWithHumn = monkeyParents.getValue("humn")
+        val operationStack = mutableListOf("humn" to operationWithHumn)
+        var lastOperation = operationWithHumn
+        while (lastOperation.name != "root") {
+            lastOperation = monkeyParents.getValue(lastOperation.name)
+            operationStack.add(operationStack.last().second.name to lastOperation)
+        }
 
-        val b = getAnswer(monkeys.getValue(rootMonkey.b), monkeys)
-
-        return requiredNumberForEquality(b, monkeys.getValue(rootMonkey.a), monkeys)
+        // bubble down
+        val (unknownRootPart, rootOperation) = operationStack.removeLast()
+        val equalityCheck = rootOperation.getKnownPart(unknownRootPart, monkeys)
+        return operationStack.reversed().fold(equalityCheck) { desiredAnswer, (unknownPart, operation) ->
+            operation.getUnknownPart(desiredAnswer, unknownPart, monkeys)
+        }
     }
 
-    private fun requiredNumberForEquality(number: Long, monkey: Monkey, monkeys: Map<String, Monkey>): Long {
-        return when (monkey) {
-            is NumberMonkey -> monkey.number
-            is OperationMonkey -> {
-                val a = monkeys[monkey.a] ?: return number
-                val b = monkeys[monkey.b] ?: return number
+    private fun OperationMonkey.getKnownPart(unknownPart: String, monkeys: Map<String, Monkey>): Long {
+        return when {
+            a == unknownPart -> getAnswer(b, monkeys)
+            b == unknownPart -> getAnswer(a, monkeys)
+            else -> throw IllegalArgumentException()
+        }
+    }
 
-                val answerA = getAnswer(a, monkeys)
-                val answerB = getAnswer(b, monkeys)
-                val answer = monkey.operation(answerA, answerB)
+    private fun OperationMonkey.getUnknownPart(
+        desiredAnswer: Long,
+        unknownPart: String,
+        monkeys: Map<String, Monkey>
+    ): Long {
+        val knownPart = getKnownPart(unknownPart, monkeys)
+        return when (operator) {
+            '+' -> desiredAnswer - knownPart
+            '-' -> {
+                if (a == unknownPart) {
+                    desiredAnswer + knownPart
+                } else {
+                    knownPart - desiredAnswer
+                }
             }
+
+            '*' -> desiredAnswer / getKnownPart(unknownPart, monkeys)
+            '/' -> {
+                if (a == unknownPart) {
+                    desiredAnswer * knownPart
+                } else {
+                    knownPart / desiredAnswer
+                }
+            }
+
+            else -> throw IllegalArgumentException("unexpected operator $operator")
         }
     }
 
@@ -77,7 +108,7 @@ class Day21 : AbstractDay() {
                     "/" -> Long::div
                     else -> throw IllegalArgumentException("unexpected operator $operator")
                 }
-                OperationMonkey(name, a, b, operation)
+                OperationMonkey(name, a, b, operator[0], operation)
             } else {
                 NumberMonkey(name, operationString.toLong())
             }
@@ -86,29 +117,17 @@ class Day21 : AbstractDay() {
         return monkeys.associateBy { it.name }
     }
 
-    private fun parse2(input: List<String>): Map<String, Monkey> {
-        val monkeys = input.mapNotNull {
-            val (name, operationString) = it.split(": ")
-            if (operationString.toLongOrNull() == null) {
-                val (a, operator, b) = operationString.split(" ")
-                val operation: (Long, Long) -> Long = when (operator) {
-                    "+" -> Long::plus
-                    "-" -> Long::minus
-                    "*" -> Long::times
-                    "/" -> Long::div
-                    else -> throw IllegalArgumentException("unexpected operator $operator")
-                }
-                OperationMonkey(name, a, b, operation)
-            } else {
-                if (name == "humn") {
-                    null // we skip this on purpose
-                } else {
-                    NumberMonkey(name, operationString.toLong())
-                }
-            }
-        }
-
-        return monkeys.associateBy { it.name }
+    private fun parse2(input: List<String>): Pair<Map<String, Monkey>, Map<String, OperationMonkey>> {
+        val lookup = parse1(input)
+        val parentLookup = lookup.values
+            .filterIsInstance<OperationMonkey>()
+            .flatMap {
+                listOf(
+                    it.a to it,
+                    it.b to it,
+                )
+            }.toMap()
+        return lookup to parentLookup
     }
 
     sealed interface Monkey {
@@ -124,6 +143,7 @@ class Day21 : AbstractDay() {
         override val name: String,
         val a: String,
         val b: String,
+        val operator: Char,
         val operation: (Long, Long) -> Long,
     ) : Monkey
 }
