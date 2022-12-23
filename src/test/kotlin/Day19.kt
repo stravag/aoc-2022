@@ -6,17 +6,17 @@ class Day19 : AbstractDay() {
 
     @Test
     fun part1Test() {
-        assertEquals(24, compute1(testInput))
+        assertEquals(33, compute1(testInput))
     }
 
     @Test
     fun part1Puzzle() {
-        assertEquals(0, compute1(puzzleInput))
+        assertEquals(1150, compute1(puzzleInput))
     }
 
     @Test
     fun part2Test() {
-        assertEquals(0, compute2(testInput))
+        assertEquals(56 * 62, compute2(testInput))
     }
 
     @Test
@@ -25,80 +25,148 @@ class Day19 : AbstractDay() {
     }
 
     private fun compute1(input: List<String>): Int {
-        val results = input.map { Blueprint.parse(it) }.map { blueprint ->
-            blueprint.number to blueprint.harvestGeodes(24)
-        }
+        val results = input
+            .map { Blueprint.parse(it) }
+            .map { blueprint ->
+                blueprint.number to maxGeodes(blueprint, 24)
+            }
 
-        return results.maxBy { it.second }.let { (number, geodes) -> number * geodes }
+        return results.sumOf { (number, geodes) -> number * geodes }
     }
 
 
     private fun compute2(input: List<String>): Int {
-        return input.size
+        val results = input
+            .map { Blueprint.parse(it) }
+            .take(3)
+            .map { blueprint ->
+                maxGeodes(blueprint, 32)
+            }
+
+        return results.reduce { acc, i -> acc * i }
     }
 
-    private class Blueprint(
-        val number: Int,
-        private val requiredResourcesForAction: Map<Action, Resources>,
-    ) {
-        fun harvestGeodes(depth: Int): Int {
-            println("Starting $this")
-            val startTime = System.currentTimeMillis()
-            val maxGeodeCount = determineMaxGeodeCount(
-                startTime = startTime,
-                state = State(
-                    robots = Robots(oreRobots = 1),
-                    resources = Resources(),
-                    remainingMinutes = depth,
-                ),
-                knownMax = 0,
-                iterations = 0,
+    private fun maxGeodes(blueprint: Blueprint, minutes: Int): Int {
+        println("Starting $blueprint")
+
+        val startTime = System.currentTimeMillis()
+
+        var max = 0
+        var iteration = 0L
+
+        val statesCache = HashSet<State>()
+        val states = mutableListOf(
+            State(
+                robots = Robots(oreRobots = 1),
+                resources = Resources(),
+                remainingMinutes = minutes,
             )
+        )
 
-            val duration = Duration.ofMillis(System.currentTimeMillis() - startTime)
-            println("Blueprint $number has max geode of $maxGeodeCount for depth=$depth in $duration")
-            return maxGeodeCount
-        }
+        while (states.isNotEmpty()) {
+            iteration++
+            val state = states.removeLast()
 
-        private fun determineMaxGeodeCount(
-            startTime: Long,
-            state: State,
-            knownMax: Int,
-            iterations: Int,
-        ): Int {
-            val blueprint = this
-            var max = state.resources.geode
-
-            if (state.maxPossibleGeodeCount <= knownMax) {
-                //return knownMax
-            }
-            if (state.remainingMinutes == 0) {
-                return max
-            }
-
-            val nextPossibleActions = state.nextPossibleActions(blueprint)
-
-            nextPossibleActions.forEach { nextPossibleAction ->
-                val stateIncreased = state.nextStep()
-                val stateAfterBuild = stateIncreased.perform(nextPossibleAction, blueprint)
-                val optionResult = determineMaxGeodeCount(
-                    startTime = startTime,
-                    state = stateAfterBuild,
-                    knownMax = max,
-                    iterations = iterations + 1,
-                )
-                if (optionResult > max) {
-                    val duration = Duration.ofMillis(System.currentTimeMillis() - startTime)
-                    println("$max - iteration $iterations, $duration")
-                    max = optionResult
+            if (state.robots.clayRobots == 0 || state.robots.obsidianRobots == 0) {
+                val minutesUntilObsidianRobot = blueprint.minutesUntilProduced(Action.BUILD_OBSIDIAN_ROBOT, state)
+                val minutesUntilGeodeRobot = blueprint.minutesUntilProduced(Action.BUILD_GEODE_ROBOT, state)
+                if (minutesUntilObsidianRobot + minutesUntilGeodeRobot >= state.remainingMinutes) {
+                    // abort not enough time left to build any geode robots
+                    continue
+                }
+                if (maxProduction(state.remainingMinutes - minutesUntilObsidianRobot - minutesUntilGeodeRobot) <= max) {
+                    // even best case not better
+                    continue
+                }
+            } else if (state.robots.geodeRobots == 0) {
+                val minutesUntilGeodeRobot = blueprint.minutesUntilProduced(Action.BUILD_GEODE_ROBOT, state)
+                if (maxProduction(state.remainingMinutes - minutesUntilGeodeRobot) <= max) {
+                    continue
                 }
             }
 
-            return max
+            if (statesCache.contains(state)) {
+                continue
+            }
+            statesCache.add(state)
+
+            val nextStates = state.nextPossibleStates(blueprint)
+
+            nextStates.forEach { nextState ->
+                if (nextState.remainingMinutes == 0) {
+                    if (nextState.resources.geode > max) {
+                        max = nextState.resources.geode
+                        val duration = Duration.ofMillis(System.currentTimeMillis() - startTime)
+                        println("$max - iteration $iteration, $duration")
+                    }
+                } else {
+                    states.add(nextState)
+                }
+            }
         }
 
+        val duration = Duration.ofMillis(System.currentTimeMillis() - startTime)
+        println("Took $iteration iterations, $duration")
+
+        return max
+    }
+
+    private fun maxProduction(minutes: Int): Int {
+        return (0 until minutes).sum()
+    }
+
+
+    private data class Blueprint(
+        val number: Int,
+        private val requiredResourcesForAction: Map<Action, Resources>,
+    ) {
+
         fun requiredResources(action: Action): Resources {
-            return requiredResourcesForAction.getValue(action)
+            return requiredResourcesForAction[action] ?: Resources()
+        }
+
+        fun maxRequiredResources(type: (Resources) -> Int): Int {
+            return requiredResourcesForAction.values.maxOfOrNull(type) ?: 0
+        }
+
+        fun minutesUntilProduced(action: Action, state: State): Int {
+            val required = requiredResources(action)
+            return when (action) {
+                Action.NOOP -> 0
+                Action.BUILD_ORE_ROBOT -> minutesUntilProduced(
+                    count = required.ore, startingCount = state.resources.ore, startingRobots = state.robots.oreRobots
+                )
+
+                Action.BUILD_CLAY_ROBOT -> minutesUntilProduced(
+                    count = required.ore, startingCount = state.resources.ore, startingRobots = state.robots.oreRobots
+                )
+
+                // only clay of interest
+                Action.BUILD_OBSIDIAN_ROBOT -> minutesUntilProduced(
+                    count = required.clay,
+                    startingCount = state.resources.clay,
+                    startingRobots = state.robots.clayRobots,
+                )
+
+                // only obsidian of interest
+                Action.BUILD_GEODE_ROBOT -> minutesUntilProduced(
+                    required.obsidian, state.resources.obsidian, state.robots.obsidianRobots
+                )
+            }
+        }
+
+        private fun minutesUntilProduced(count: Int, startingCount: Int, startingRobots: Int): Int {
+            var minutes = 0
+            var robots = startingRobots
+            var sum = startingCount
+            while (true) {
+                sum += robots
+                if (sum >= count) {
+                    return minutes
+                }
+                robots++
+                minutes++
+            }
         }
 
         companion object {
@@ -125,7 +193,6 @@ class Day19 : AbstractDay() {
 
                 return Blueprint(
                     number = number, requiredResourcesForAction = mapOf(
-                        Action.NOOP to Resources(),
                         Action.BUILD_ORE_ROBOT to oreRobotRequires,
                         Action.BUILD_CLAY_ROBOT to clayRobotRequires,
                         Action.BUILD_OBSIDIAN_ROBOT to obsidianRobotRequires,
@@ -145,47 +212,53 @@ class Day19 : AbstractDay() {
         val resources: Resources,
         val remainingMinutes: Int,
     ) {
-        fun perform(action: Action, blueprint: Blueprint): State {
+        fun next(action: Action, blueprint: Blueprint): State {
             val requiredResources = blueprint.requiredResources(action)
-            val reducedResources = resources - requiredResources
+            val resourcesAfterActionAndGathering = resources - requiredResources + robots
             return State(
-                robots = robots.build(action), resources = reducedResources, remainingMinutes = remainingMinutes
+                robots = robots.build(action),
+                resources = resourcesAfterActionAndGathering,
+                remainingMinutes = remainingMinutes - 1
             )
         }
 
-        fun nextStep(): State {
-            return State(
-                robots = robots,
-                resources = resources + robots,
-                remainingMinutes = remainingMinutes - 1,
-            )
+        fun nextPossibleStates(blueprint: Blueprint): List<State> {
+            val nextPossibleActions = nextPossibleActions(blueprint)
+            return nextPossibleActions.map { action -> next(action, blueprint) }
         }
 
-        fun nextPossibleActions(blueprint: Blueprint): List<Action> {
-            val actions = mutableListOf<Action>()
+        private fun nextPossibleActions(blueprint: Blueprint): List<Action> {
             if (can(Action.BUILD_GEODE_ROBOT, blueprint)) {
                 return listOf(Action.BUILD_GEODE_ROBOT)
             }
+
+            val actions = ArrayList<Action>(4)
             if (can(Action.BUILD_OBSIDIAN_ROBOT, blueprint)) {
-                actions.add(Action.BUILD_OBSIDIAN_ROBOT)
+                val maxObsidianConsumption = blueprint.maxRequiredResources { it.obsidian } * remainingMinutes
+                val obsidianProductionCapacity = resources.obsidian + (robots.obsidianRobots * remainingMinutes)
+                if (maxObsidianConsumption > obsidianProductionCapacity) {
+                    actions.add(Action.BUILD_OBSIDIAN_ROBOT)
+                }
             }
             if (can(Action.BUILD_CLAY_ROBOT, blueprint)) {
-                actions.add(Action.BUILD_CLAY_ROBOT)
+                val maxClayConsumption = blueprint.maxRequiredResources { it.clay } * remainingMinutes
+                val clayProductionCapacity = resources.clay + (robots.clayRobots * remainingMinutes)
+                if (maxClayConsumption > clayProductionCapacity) {
+                    actions.add(Action.BUILD_CLAY_ROBOT)
+                }
             }
             if (can(Action.BUILD_ORE_ROBOT, blueprint)) {
-                actions.add(Action.BUILD_ORE_ROBOT)
+                val maxOreConsumption = blueprint.maxRequiredResources { it.ore } * remainingMinutes
+                val oreProductionCapacity = resources.ore + (robots.oreRobots * remainingMinutes)
+                if (maxOreConsumption > oreProductionCapacity) {
+                    actions.add(Action.BUILD_ORE_ROBOT)
+                }
             }
-            actions.add(Action.NOOP)
+
+            actions.add(Action.NOOP);
 
             return actions
         }
-
-        val maxPossibleGeodeCount: Int
-            get() {
-                val geodesFromExistingRobots = robots.geodeRobots * remainingMinutes
-                val geodesFromFutureGeodeRobots = (1..remainingMinutes).sum()
-                return geodesFromExistingRobots + geodesFromFutureGeodeRobots
-            }
 
         private fun can(action: Action, blueprint: Blueprint): Boolean {
             val requiredResources = blueprint.requiredResources(action)
@@ -244,5 +317,4 @@ class Day19 : AbstractDay() {
             }
         }
     }
-
 }
