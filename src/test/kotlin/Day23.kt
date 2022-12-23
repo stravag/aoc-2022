@@ -15,12 +15,12 @@ class Day23 : AbstractDay() {
 
     @Test
     fun part2Test() {
-        assertEquals(0, compute2(testInput))
+        assertEquals(20, compute2(testInput))
     }
 
     @Test
     fun part2Puzzle() {
-        assertEquals(0, compute2(puzzleInput))
+        assertEquals(1036, compute2(puzzleInput))
     }
 
     private fun compute1(input: List<String>): Int {
@@ -31,12 +31,18 @@ class Day23 : AbstractDay() {
         }
         elves.print()
 
-        return elves.result
+        return elves.result1
     }
 
 
     private fun compute2(input: List<String>): Int {
-        return input.size
+        val elves = parse(input)
+
+        do {
+            val moved = elves.round()
+        } while (moved)
+
+        return elves.result2
     }
 
     class Elves(
@@ -45,7 +51,7 @@ class Day23 : AbstractDay() {
     ) {
         constructor(positions: List<Elf>) : this(LinkedHashSet(positions))
 
-        fun round() {
+        fun round(): Boolean {
             val moveSuggestions = moveSuggestions()
                 .sortedBy { it.current }
 
@@ -62,11 +68,13 @@ class Day23 : AbstractDay() {
                 }
 
             require(newPositions.size == currentPositions.size)
+            val hasMoved = !currentPositions.containsAll(newPositions)
             currentPositions = LinkedHashSet(newPositions)
             roundCount++
+            return hasMoved
         }
 
-        val result: Int
+        val result1: Int
             get() {
                 val minX = currentPositions.minOf { it.x }
                 val maxX = currentPositions.maxOf { it.x }
@@ -76,6 +84,9 @@ class Day23 : AbstractDay() {
                 val height = maxY - minY + 1
                 return width * height - currentPositions.size
             }
+
+        val result2: Int
+            get() = roundCount
 
         fun print() {
             val minX = currentPositions.minOf { it.x }
