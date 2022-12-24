@@ -54,7 +54,7 @@ object Day09 : AbstractDay() {
         val tail: Position get() = positions.last().copy()
     }
 
-    data class Position(var x: Int, var y: Int) {
+    private data class Position(var x: Int, var y: Int) {
         fun move(direction: String) {
             when (direction) {
                 "R" -> x++
