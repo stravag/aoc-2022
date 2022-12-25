@@ -18,7 +18,7 @@ class Day24 : AbstractDay() {
 
         print(valley, blizzardCache, ValleyState(valley.start, 0))
 
-        val quickestPath = findQuickestPath(valley, blizzardCache)
+        val quickestPath = findQuickestPath(valley, blizzardCache, 0, valley.start, valley.end)
 
         assertEquals(Int.MAX_VALUE, quickestPath)
     }
@@ -36,7 +36,7 @@ class Day24 : AbstractDay() {
 
         print(valley, blizzardCache, ValleyState(valley.start, 0))
 
-        val quickestPath = findQuickestPath(valley, blizzardCache)
+        val quickestPath = findQuickestPath(valley, blizzardCache, 0, valley.start, valley.end)
 
         assertEquals(Int.MAX_VALUE, quickestPath)
     }
@@ -49,9 +49,9 @@ class Day24 : AbstractDay() {
             ##.#
         """.trimIndent().lines()
 
-        val (valley, initialState) = parse(input)
+        val (valley, blizzardCache) = parse(input)
 
-        val quickestPath = findQuickestPath(valley, initialState)
+        val quickestPath = findQuickestPath(valley, blizzardCache, 0, valley.start, valley.end)
 
         assertEquals(3, quickestPath)
     }
@@ -68,30 +68,65 @@ class Day24 : AbstractDay() {
 
     @Test
     fun part2Test() {
-        assertEquals(0, compute2(testInput))
+        assertEquals(54, compute2(testInput))
     }
 
     @Test
     fun part2Puzzle() {
-        assertEquals(0, compute2(puzzleInput))
+        assertEquals(723, compute2(puzzleInput))
     }
 
     private fun compute1(input: List<String>): Int {
         val (valley, blizzardCache) = parse(input)
-        return findQuickestPath(valley, blizzardCache)
+        return findQuickestPath(
+            valley = valley,
+            blizzardCache = blizzardCache,
+            minutesPassed = 0,
+            start = valley.start,
+            end = valley.end,
+        )
     }
 
     private fun compute2(input: List<String>): Int {
-        TODO()
+        val (valley, blizzardCache) = parse(input)
+
+        val run1 = findQuickestPath(
+            valley = valley,
+            blizzardCache = blizzardCache,
+            minutesPassed = 0,
+            start = valley.start,
+            end = valley.end,
+        )
+
+        val run2 = findQuickestPath(
+            valley = valley,
+            blizzardCache = blizzardCache,
+            minutesPassed = run1,
+            start = valley.end,
+            end = valley.start,
+        )
+
+        return findQuickestPath(
+            valley = valley,
+            blizzardCache = blizzardCache,
+            minutesPassed = run2,
+            start = valley.start,
+            end = valley.end,
+        )
     }
 
-    private fun findQuickestPath(valley: Valley, blizzardCache: BlizzardCache): Int {
+    private fun findQuickestPath(
+        valley: Valley,
+        blizzardCache: BlizzardCache,
+        minutesPassed: Int,
+        start: Position,
+        end: Position,
+    ): Int {
         var quickestPath = Int.MAX_VALUE
         var iteration = 0
         val startTime = System.currentTimeMillis()
 
-        val initialState = ValleyState(position = valley.start, minutesPassed = 0)
-        val states = LinkedList(listOf(initialState))
+        val states = LinkedList(listOf(ValleyState(start, minutesPassed)))
         val positionsCache = mutableMapOf<Int, HashSet<Position>>()
 
         while (states.isNotEmpty()) {
@@ -115,12 +150,12 @@ class Day24 : AbstractDay() {
 
             // determine next moves
             val possibleMoves = (state.position.neighbours)
-                .filterNot { it == valley.start }
+                .filterNot { it == start }
                 .plus(state.position)
                 .filterNot { it.hitsWall(valley) }
                 .filterNot { it.hits(blizzards) }
 
-            if (possibleMoves.contains(valley.end)) {
+            if (possibleMoves.contains(end)) {
                 if (state.minutesPassed + 1 < quickestPath) {
                     quickestPath = state.minutesPassed + 1
                     val duration = Duration.ofMillis(System.currentTimeMillis() - startTime)
@@ -144,8 +179,8 @@ class Day24 : AbstractDay() {
     }
 
     private fun Position.hits(blizzards: List<Blizzard>) = blizzards.map { it.position }.contains(this)
-    private fun Position.hitsWall(valley: Valley) = y < 0 || valley.walls.map { it.position }.contains(this)
-
+    private fun Position.hitsWall(valley: Valley) =
+        y < 0 || y > valley.end.y || valley.walls.map { it.position }.contains(this)
 
     private data class ValleyState(
         val position: Position,
